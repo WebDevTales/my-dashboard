@@ -1,0 +1,2686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UI Elements Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #FFF8E7;
+            color: #000;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        .dashboard-header {
+            background: #000;
+            color: #FFD700;
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid #FFD700;
+        }
+
+        .dashboard-title {
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #FF0000;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #00FF00;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+        }
+
+        .nav-tab {
+            background: #FFD700;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab:hover {
+            background: #FFF;
+        }
+
+        .nav-tab.active {
+            background: #FFF;
+            box-shadow: 0 4px 0 #FFD700;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            height: calc(100vh - 70px);
+        }
+
+        .page-section {
+            display: none;
+            width: 100%;
+        }
+
+        .page-section.active {
+            display: flex;
+        }
+
+        /* Split View for Add Page */
+        .split-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 4px solid #000;
+            background: #F5F5F5;
+        }
+
+        .right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #FFF;
+        }
+
+        /* Form Section in Left Panel */
+        .form-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        .form-section {
+            background: #FFF;
+            border: 3px solid #000;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+
+        .form-section-title {
+            font-size: 18px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            color: #000;
+            border-bottom: 3px solid #FFD700;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 3px solid #000;
+            background: #FFF;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-input:focus {
+            background: #FFFDF0;
+            border-color: #FFD700;
+        }
+
+        /* Category Grid */
+.category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    max-width: 100%;
+}
+        .category-item {
+            background: #FFF8E7;
+            border: 3px solid #000;
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .category-item:hover {
+            background: #FFD700;
+        }
+
+        .category-item.selected {
+            background: #000;
+            color: #FFD700;
+        }
+.CodeMirror-scroll {
+    overflow: scroll !important;
+    margin-bottom: -50px;
+    margin-right: -50px;
+    padding-bottom: 50px;
+    max-height: 300px;
+    outline: 0;
+    position: relative;
+    z-index: 0;
+}
+        /* Tags */
+        .tags-scroll-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            max-height: 200px;
+            overflow: auto;
+            padding: 20px 0;
+            scrollbar-width: thin;
+            scrollbar-color: #FFD700 #FFF8E7;
+        }
+
+        .tags-scroll-container::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .tags-scroll-container::-webkit-scrollbar-track {
+            background: #FFF8E7;
+        }
+
+        .tags-scroll-container::-webkit-scrollbar-thumb {
+            background: #FFD700;
+            border-radius: 3px;
+        }
+
+        .tag-item {
+            background: #FFF8E7;
+            border: 3px solid #000;
+            padding: 8px 15px;
+            font-weight: bold;
+            text-transform: uppercase;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            flex-shrink: 0;
+            font-size: 15px;
+        }
+
+        .tag-item:hover {
+            background: #FFD700;
+        }
+
+        .tag-item.selected {
+            background: #000;
+            color: #FFD700;
+        }
+
+        .selected-tags-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+            min-height: 40px;
+            padding: 12px;
+            border: 3px dashed #000;
+            background: #FFFDF0;
+        }
+
+        .selected-tag-badge {
+            background: #000;
+            color: #FFD700;
+            padding: 6px 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+        }
+
+        .remove-tag {
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .remove-tag:hover {
+            color: #FFF;
+        }
+
+        /* Preview Section */
+        .preview-header {
+            background: #000;
+            color: #FFD700;
+            padding: 15px 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 4px solid #FFD700;
+        }
+
+        .preview-frame {
+            flex: 1;
+            width: 100%;
+            border: none;
+            background: #F5F5F5;
+        }
+
+        /* Code Editors Section */
+        .code-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .code-tabs {
+            display: flex;
+            background: #000;
+            border-bottom: 4px solid #FFD700;
+        }
+
+        .code-tab {
+            flex: 1;
+            background: #333;
+            color: #FFD700;
+            border: none;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            border-right: 2px solid #000;
+            transition: all 0.3s ease;
+        }
+
+        .code-tab:hover {
+            background: #444;
+        }
+
+        .code-tab.active {
+            background: #FFD700;
+            color: #000;
+        }
+
+        .code-tab i {
+            margin-right: 8px;
+        }
+
+        .code-editor-container {
+            flex: 1;
+            position: relative;
+            display: none;
+        }
+
+        .code-editor-container.active {
+            display: block;
+        }
+
+        .CodeMirror {
+            height: 100% !important;
+            font-size: 14px;
+        }
+
+        /* Submit Section */
+        .submit-section {
+            padding: 20px 30px;
+            background: #FFF;
+            border-top: 4px solid #000;
+        }
+
+        .submit-btn {
+            background: #FFD700;
+            color: #000;
+            border: 4px solid #000;
+            padding: 15px 40px;
+            font-family: 'Courier New', monospace;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .submit-btn:hover {
+            background: #000;
+            color: #FFD700;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 0 #FFD700;
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Analytics Page */
+        .analytics-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px;
+        }
+
+        .total-summary {
+            background: #000;
+            color: #FFD700;
+            border: 4px solid #FFD700;
+            padding: 40px;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .total-summary-number {
+            font-size: 80px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .total-summary-text {
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 25px;
+        }
+
+        .analytics-card {
+            background: #FFF;
+            border: 4px solid #000;
+            transition: all 0.3s ease;
+        }
+
+        .analytics-card:hover {
+            box-shadow: 8px 8px 0 #000;
+            transform: translate(-4px, -4px);
+        }
+
+        .analytics-header {
+            background: #000;
+            color: #FFD700;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .analytics-count {
+            font-size: 60px;
+            font-weight: bold;
+            text-align: center;
+            padding: 40px 20px;
+            background: #FFF8E7;
+        }
+
+        .analytics-footer {
+            padding: 12px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-top: 3px solid #000;
+            font-size: 12px;
+        }
+
+        /* Toast Notifications */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #000;
+            color: #FFD700;
+            padding: 20px 30px;
+            border: 4px solid #FFD700;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+            box-shadow: 8px 8px 0 rgba(0,0,0,0.3);
+        }
+
+        .toast.error {
+            background: #FF0000;
+            color: #FFF;
+            border-color: #000;
+        }
+
+        .toast.success {
+            background: #00FF00;
+            color: #000;
+            border-color: #000;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.hiding {
+            animation: slideOut 0.3s ease;
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            text-align: center;
+        }
+
+        .loading-spinner {
+            width: 80px;
+            height: 80px;
+            border: 8px solid #333;
+            border-top: 8px solid #FFD700;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        .loading-text {
+            color: #FFD700;
+            font-size: 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .split-container {
+                flex-direction: column;
+            }
+
+            .left-panel {
+                border-right: none;
+                border-bottom: 4px solid #000;
+                max-height: 50vh;
+            }
+
+            .right-panel {
+                max-height: 50vh;
+            }
+        }
+
+
+
+        /* Image Preview Modal */
+.image-preview-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-preview-modal.active {
+    display: flex;
+}
+
+.image-preview-content {
+    background: #FFF;
+    border: 4px solid #FFD700;
+    max-width: 90%;
+    max-height: 90%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+}
+
+.image-preview-header {
+    background: #000;
+    color: #FFD700;
+    padding: 20px 30px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 4px solid #FFD700;
+}
+
+.modal-close {
+    background: #FFD700;
+    color: #000;
+    border: none;
+    width: 35px;
+    height: 35px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.modal-close:hover {
+    background: #FF0000;
+    color: #FFF;
+}
+
+.image-preview-body {
+    flex: 1;
+    padding: 30px;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    background: #F5F5F5;
+}
+
+.preview-image-container {
+    background: #FFF;
+    border: 3px solid #000;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+}
+
+.preview-image-container img {
+    max-width: 100%;
+    max-height: 60vh;
+    border: 2px solid #FFD700;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.image-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+.upload-btn, .paste-btn {
+    background: #FFD700;
+    color: #000;
+    border: 3px solid #000;
+    padding: 15px 30px;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.upload-btn:hover, .paste-btn:hover {
+    background: #000;
+    color: #FFD700;
+    transform: translateY(-2px);
+}
+
+.image-preview-footer {
+    background: #FFF;
+    padding: 20px 30px;
+    border-top: 4px solid #000;
+    display: flex;
+    gap: 15px;
+    justify-content: flex-end;
+}
+
+.modal-btn {
+    border: 3px solid #000;
+    padding: 15px 40px;
+    font-family: 'Courier New', monospace;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.cancel-btn {
+    background: #FFF;
+    color: #000;
+}
+
+.cancel-btn:hover {
+    background: #FF0000;
+    color: #FFF;
+    border-color: #FF0000;
+}
+
+.confirm-btn {
+    background: #FFD700;
+    color: #000;
+}
+
+.confirm-btn:hover {
+    background: #00FF00;
+    color: #000;
+    border-color: #000;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 0 #000;
+}
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="dashboard-title">
+            <i class="fas fa-code"></i>
+            <span>UI Elements Dashboard</span>
+        </div>
+        <div class="connection-status">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">Connecting...</span>
+        </div>
+        <div class="nav-tabs">
+            <button class="nav-tab active" data-page="add">
+                <i class="fas fa-plus"></i> Add Element
+            </button>
+            <button class="nav-tab" data-page="analytics">
+                <i class="fas fa-chart-bar"></i> Analytics
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Add Element Page -->
+        <div class="page-section active" id="add-page">
+            <div class="split-container">
+                <!-- Left Panel: Preview -->
+                <div class="left-panel">
+                    <div class="preview-header">
+                        <i class="fas fa-eye"></i> Live Preview
+                    </div>
+                    <iframe class="preview-frame" id="previewFrame"></iframe>
+
+                </div>
+
+                <!-- Right Panel: Form & Code -->
+                <div class="right-panel">
+                    <!-- Form Section -->
+                    <div class="form-scroll">
+                        <div class="form-section">
+                            <div class="form-section-title">Element Details</div>
+                            <div class="form-group">
+                                <label class="form-label">Element Title</label>
+                                <input type="text" class="form-input" id="elementTitle" placeholder="e.g., Glassmorphic Card">
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <div class="form-section-title">Select Category</div>
+                            <div class="category-grid" id="categoryGrid">
+                                <!-- Categories will be loaded here -->
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <div class="form-section-title">Select Tags</div>
+                            <div class="tags-scroll-container" id="tagsScroll">
+                                <!-- Tags will be loaded here -->
+                            </div>
+                            <div class="selected-tags-display" id="selectedTagsDisplay">
+                                <span style="color: #999; font-size: 11px;">No tags selected</span>
+                            </div>
+                        </div>
+
+<div class="form-section">
+    <div class="form-section-title">
+        Short Description
+        <button type="button" class="icon-btn" id="regenerateDescBtn" style="float: right; background: #FFD700; color: #000; border: 2px solid #000; padding: 5px 10px; cursor: pointer;" title="Regenerate Description">
+            <i class="fas fa-sync-alt"></i>
+        </button>
+    </div>
+    <div class="form-group">
+        <label class="form-label">Auto-Generated Description (Editable)</label>
+        <textarea class="form-input" id="shortDescription" rows="4" placeholder="Fill in element details above and description will auto-generate..." style="font-size: 13px; line-height: 1.5;"></textarea>
+        <small style="color: #666; font-size: 11px; margin-top: 8px; display: block;">
+            ✨ Description updates automatically as you fill details. You can edit it manually anytime.
+        </small>
+    </div>
+</div>
+
+<div class="form-section">
+    <div class="form-section-title">
+        FAQs (Auto-Generated)
+        <div style="float: right; display: flex; gap: 10px; align-items: center;">
+            <select id="faqCountSelect" style="padding: 5px 10px; border: 2px solid #000; background: #FFF; font-family: 'Courier New', monospace; font-weight: bold;">
+                <option value="3">3 FAQs</option>
+                <option value="4">4 FAQs</option>
+                <option value="5" selected>5 FAQs</option>
+                <option value="6">6 FAQs</option>
+                <option value="7">7 FAQs</option>
+                <option value="8">8 FAQs</option>
+            </select>
+            <button type="button" class="icon-btn" id="generateFaqsBtn" style="background: #FFD700; color: #000; border: 2px solid #000; padding: 5px 10px; cursor: pointer;" title="Generate FAQs">
+                <i class="fas fa-magic"></i> Generate
+            </button>
+        </div>
+    </div>
+    <div id="faqsContainer" style="margin-top: 15px;">
+        <p style="color: #999; font-size: 14px; padding: 20px; background: #FFF; border: 2px dashed #000; text-align: center;">
+            💡 Click "Generate FAQs" to create frequently asked questions based on your element details.
+            <br><small>2 permanent + 3 random questions (adjustable)</small>
+        </p>
+    </div>
+</div>
+
+
+                    <div class="submit-section">
+                        <button class="submit-btn" id="submitBtn" disabled>
+                            <i class="fas fa-upload"></i> Submit to WordPress
+                        </button>
+                    </div>
+
+                        <div class="form-section">
+                            <div class="form-section-title">Code Editors</div>
+                            
+                            <!-- Code Tabs -->
+                            <div class="code-tabs">
+                                <button class="code-tab active" data-editor="html">
+                                    <i class="fab fa-html5"></i> HTML
+                                </button>
+                                <button class="code-tab" data-editor="css">
+                                    <i class="fab fa-css3-alt"></i> CSS
+                                </button>
+                                <button class="code-tab" data-editor="js">
+                                    <i class="fab fa-js"></i> JavaScript
+                                </button>
+                            </div>
+
+                            <!-- Code Editors -->
+                            <div class="code-editor-container active" id="htmlEditorContainer">
+                                <textarea id="htmlEditor"></textarea>
+                            </div>
+                            <div class="code-editor-container" id="cssEditorContainer">
+                                <textarea id="cssEditor"></textarea>
+                            </div>
+                            <div class="code-editor-container" id="jsEditorContainer">
+                                <textarea id="jsEditor"></textarea>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Page -->
+        <div class="page-section" id="analytics-page">
+            <div class="analytics-container">
+                <div class="total-summary">
+                    <div class="total-summary-number" id="totalElements">0</div>
+                    <div class="total-summary-text">Total Elements</div>
+                </div>
+                <div class="analytics-grid" id="analyticsGrid">
+                    <!-- Analytics cards will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text" id="loadingText">Loading...</div>
+        </div>
+    </div>
+
+
+    <!-- Image Preview Modal -->
+<div class="image-preview-modal" id="imagePreviewModal">
+    <div class="image-preview-content">
+        <div class="image-preview-header">
+            <i class="fas fa-image"></i> Preview Screenshot
+            <button class="modal-close" id="modalClose">✕</button>
+        </div>
+        <div class="image-preview-body">
+            <div class="preview-image-container">
+                <img id="previewImage" src="" alt="Preview">
+            </div>
+            <div class="image-actions">
+                <label class="upload-btn">
+                    <i class="fas fa-upload"></i> Upload New Image
+                    <input type="file" id="imageUpload" accept="image/*" style="display: none;">
+                </label>
+                <button class="paste-btn" id="pasteBtn">
+                    <i class="fas fa-paste"></i> Paste from Clipboard (Ctrl+V)
+                </button>
+            </div>
+        </div>
+        <div class="image-preview-footer">
+            <button class="modal-btn cancel-btn" id="cancelSubmit">
+                <i class="fas fa-times"></i> Cancel
+            </button>
+            <button class="modal-btn confirm-btn" id="confirmSubmit">
+                <i class="fas fa-check"></i> Confirm & Submit
+            </button>
+        </div>
+    </div>
+</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/css/css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
+
+    <script>
+        // ========================================
+        // WORDPRESS CREDENTIALS (STORED IN CODE)
+        // ========================================
+         const WP_CONFIG = {
+            url: 'https://toolsfever.com',  // Change this to your WordPress site URL
+            username: 'webdevtales@gmail.com',            // Change this to your WordPress username
+            password: '2Hat 2GNg 6FYk jaFt jTlo qEXz'  // Change this to your application password
+        };
+
+        // State Management
+        const state = {
+            wpUrl: WP_CONFIG.url,
+            wpUsername: WP_CONFIG.username,
+            wpPassword: WP_CONFIG.password,
+            isConnected: false,
+            categories: [],
+            tags: [],
+            selectedCategory: null,
+            selectedTags: [],
+            currentCodeTab: 'html'
+        };
+
+// Initialize CodeMirror Editors
+const htmlEditor = CodeMirror.fromTextArea(document.getElementById('htmlEditor'), {
+    mode: 'htmlmixed',
+    theme: 'dracula',
+    lineNumbers: true,
+    lineWrapping: true,
+    tabSize: 2,
+    indentWithTabs: false,
+    indentUnit: 2,
+    electricChars: true,
+    autoCloseBrackets: true,
+    matchBrackets: true,
+    extraKeys: {
+        "Ctrl-Space": "autocomplete"
+    }
+});
+
+const cssEditor = CodeMirror.fromTextArea(document.getElementById('cssEditor'), {
+    mode: 'css',
+    theme: 'dracula',
+    lineNumbers: true,
+    lineWrapping: true,
+    tabSize: 2,
+    indentWithTabs: false,
+    indentUnit: 2,
+    electricChars: true,
+    autoCloseBrackets: true,
+    matchBrackets: true,
+    extraKeys: {
+        "Ctrl-Space": "autocomplete"
+    }
+});
+
+const jsEditor = CodeMirror.fromTextArea(document.getElementById('jsEditor'), {
+    mode: 'javascript',
+    theme: 'dracula',
+    lineNumbers: true,
+    lineWrapping: true,
+    tabSize: 2,
+    indentWithTabs: false,
+    indentUnit: 2,
+    electricChars: true,
+    autoCloseBrackets: true,
+    matchBrackets: true,
+    extraKeys: {
+        "Ctrl-Space": "autocomplete"
+    }
+});
+
+// Code Tab Switching
+document.querySelectorAll('.code-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        const editor = tab.dataset.editor;
+        
+        document.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.code-editor-container').forEach(c => c.classList.remove('active'));
+        
+        tab.classList.add('active');
+        document.getElementById(`${editor}EditorContainer`).classList.add('active');
+        
+        state.currentCodeTab = editor;
+        
+        // Refresh the active editor with proper timing
+        setTimeout(() => {
+            if (editor === 'html') {
+                htmlEditor.refresh();
+                htmlEditor.focus();
+            }
+            if (editor === 'css') {
+                cssEditor.refresh();
+                cssEditor.focus();
+            }
+            if (editor === 'js') {
+                jsEditor.refresh();
+                jsEditor.focus();
+            }
+        }, 50);
+    });
+});
+
+// Initial refresh after page load
+setTimeout(() => {
+    htmlEditor.refresh();
+    cssEditor.refresh();
+    jsEditor.refresh();
+}, 100);
+        // Update preview on code change
+        function updatePreview() {
+            const html = htmlEditor.getValue();
+            const css = cssEditor.getValue();
+            const js = jsEditor.getValue();
+
+            const previewContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                    <style>
+                        * { margin: 0; padding: 0; box-sizing: border-box; }
+                        body {
+                            margin: 0;
+                            padding: 20px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            min-height: 100vh;
+                            background: #44444E;
+                        }
+                        ${css}
+                    </style>
+                </head>
+                <body>
+                    ${html}
+                    <script>${js}<\/script>
+                </body>
+                </html>
+            `;
+
+            document.getElementById('previewFrame').srcdoc = previewContent;
+        }
+
+        htmlEditor.on('change', updatePreview);
+        cssEditor.on('change', updatePreview);
+        jsEditor.on('change', updatePreview);
+
+        // Toast Notifications
+        function showToast(message, type = 'info') {
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) existingToast.remove();
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Loading Overlay
+        function showLoading(text = 'Loading...') {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('loadingOverlay').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.remove('active');
+        }
+
+        // Update Connection Status UI
+        function updateConnectionStatus(connected, message = '') {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (connected) {
+                statusDot.classList.add('connected');
+                statusText.textContent = message || 'Connected';
+                submitBtn.disabled = false;
+                state.isConnected = true;
+            } else {
+                statusDot.classList.remove('connected');
+                statusText.textContent = message || 'Connection Failed';
+                submitBtn.disabled = true;
+                state.isConnected = false;
+            }
+        }
+
+        // Auto-connect on load
+        async function autoConnect() {
+            showLoading('Connecting to WordPress...');
+            updateConnectionStatus(false, 'Connecting...');
+
+            try {
+                // Test connection by fetching categories
+                const response = await fetch(`${state.wpUrl}/wp-json/wp/v2/element-category`, {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(`${state.wpUsername}:${state.wpPassword}`)
+                    }
+                });
+
+                if (response.ok) {
+                    updateConnectionStatus(true, `Connected to ${state.wpUrl}`);
+                    await loadTaxonomies();
+                    showToast('Connected Successfully!', 'success');
+                } else {
+                    throw new Error('Invalid credentials or connection failed');
+                }
+            } catch (error) {
+                showToast('Connection Failed: ' + error.message, 'error');
+                updateConnectionStatus(false, 'Connection Failed');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Page Navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const page = tab.dataset.page;
+                
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.page-section').forEach(p => p.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`${page}-page`).classList.add('active');
+
+                if (page === 'analytics') {
+                    loadAnalytics();
+                }
+            });
+        });
+
+        // Load Categories and Tags
+        async function loadTaxonomies() {
+            showLoading('Loading categories and tags...');
+
+            try {
+                const [categoriesRes, tagsRes] = await Promise.all([
+                    fetch(`${state.wpUrl}/wp-json/wp/v2/element-category?per_page=100`, {
+                        headers: {
+                            'Authorization': 'Basic ' + btoa(`${state.wpUsername}:${state.wpPassword}`)
+                        }
+                    }),
+                    fetch(`${state.wpUrl}/wp-json/wp/v2/element-tag?per_page=100`, {
+                        headers: {
+                            'Authorization': 'Basic ' + btoa(`${state.wpUsername}:${state.wpPassword}`)
+                        }
+                    })
+                ]);
+
+                state.categories = await categoriesRes.json();
+                state.tags = await tagsRes.json();
+
+                renderCategories();
+                renderTags();
+            } catch (error) {
+                showToast('Failed to load taxonomies: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderCategories() {
+            const grid = document.getElementById('categoryGrid');
+            grid.innerHTML = state.categories.map(cat => `
+                <div class="category-item" data-id="${cat.id}">
+                    ${cat.name}
+                </div>
+            `).join('');
+
+            grid.querySelectorAll('.category-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    grid.querySelectorAll('.category-item').forEach(i => i.classList.remove('selected'));
+                    item.classList.add('selected');
+                    state.selectedCategory = parseInt(item.dataset.id);
+                });
+            });
+        }
+
+        function renderTags() {
+            const container = document.getElementById('tagsScroll');
+            container.innerHTML = state.tags.map(tag => `
+                <div class="tag-item" data-id="${tag.id}">
+                    ${tag.name}
+                </div>
+            `).join('');
+
+            container.querySelectorAll('.tag-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const tagId = parseInt(item.dataset.id);
+                    const tagName = item.textContent.trim();
+
+                    if (item.classList.contains('selected')) {
+                        item.classList.remove('selected');
+                        state.selectedTags = state.selectedTags.filter(t => t.id !== tagId);
+                    } else {
+                        item.classList.add('selected');
+                        state.selectedTags.push({ id: tagId, name: tagName });
+                    }
+
+                    updateSelectedTagsDisplay();
+                });
+            });
+        }
+
+        function updateSelectedTagsDisplay() {
+            const display = document.getElementById('selectedTagsDisplay');
+            
+            if (state.selectedTags.length === 0) {
+                display.innerHTML = '<span style="color: #999; font-size: 11px;">No tags selected</span>';
+                return;
+            }
+
+            display.innerHTML = state.selectedTags.map(tag => `
+                <div class="selected-tag-badge">
+                    <span>${tag.name}</span>
+                    <span class="remove-tag" data-id="${tag.id}">✕</span>
+                </div>
+            `).join('');
+
+            display.querySelectorAll('.remove-tag').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const tagId = parseInt(btn.dataset.id);
+                    state.selectedTags = state.selectedTags.filter(t => t.id !== tagId);
+                    
+                    const tagItem = document.querySelector(`.tag-item[data-id="${tagId}"]`);
+                    if (tagItem) tagItem.classList.remove('selected');
+                    
+                    updateSelectedTagsDisplay();
+                });
+            });
+        }
+
+// Global variable to store the screenshot blob
+let currentScreenshotBlob = null;
+
+// Submit Element - STEP 1: Capture and show preview
+document.getElementById('submitBtn').addEventListener('click', async () => {
+    const title = document.getElementById('elementTitle').value.trim();
+    let html = htmlEditor.getValue().trim();
+    let css = cssEditor.getValue().trim();
+    let js = jsEditor.getValue().trim();
+
+    if (!html) html = '<!-- No HTML needed -->';
+    if (!css) css = '/* No CSS needed */';
+    if (!js) js = '// No JavaScript needed';
+
+    if (!title) {
+        showToast('Please enter an element title', 'error');
+        return;
+    }
+    if (!state.selectedCategory) {
+        showToast('Please select a category', 'error');
+        return;
+    }
+
+    try {
+        // Capture Screenshot
+        showLoading('Capturing preview screenshot...');
+
+        const previewFrame = document.getElementById('previewFrame');
+        const previewDoc = previewFrame.contentDocument;
+        const previewBody = previewDoc.body;
+
+        if (previewDoc.fonts) {
+            await previewDoc.fonts.ready;
+        }
+
+        const images = Array.from(previewDoc.querySelectorAll('img'));
+        await Promise.all(images.map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise((resolve) => {
+                img.addEventListener('load', resolve);
+                img.addEventListener('error', resolve);
+                setTimeout(resolve, 3000);
+            });
+        }));
+
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const canvas = await html2canvas(previewBody, {
+            backgroundColor: '#f5f5f5',
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            foreignObjectRendering: false,
+            logging: false,
+            imageTimeout: 15000,
+            removeContainer: true,
+            width: previewBody.scrollWidth,
+            height: previewBody.scrollHeight,
+            x: 0,
+            y: 0,
+            scrollX: 0,
+            scrollY: 0
+        });
+
+        currentScreenshotBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png', 1.0));
+
+        hideLoading();
+
+        // Show preview modal
+        const previewImage = document.getElementById('previewImage');
+        previewImage.src = URL.createObjectURL(currentScreenshotBlob);
+        document.getElementById('imagePreviewModal').classList.add('active');
+
+    } catch (error) {
+        hideLoading();
+        showToast('Failed to capture screenshot: ' + error.message, 'error');
+        console.error('Screenshot error:', error);
+    }
+});
+
+// Modal Close
+document.getElementById('modalClose').addEventListener('click', () => {
+    document.getElementById('imagePreviewModal').classList.remove('active');
+    currentScreenshotBlob = null;
+});
+
+document.getElementById('cancelSubmit').addEventListener('click', () => {
+    document.getElementById('imagePreviewModal').classList.remove('active');
+    currentScreenshotBlob = null;
+});
+
+// Upload New Image
+document.getElementById('imageUpload').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        currentScreenshotBlob = file;
+        const previewImage = document.getElementById('previewImage');
+        previewImage.src = URL.createObjectURL(file);
+        showToast('New image loaded!', 'success');
+    }
+});
+
+// Paste from Clipboard
+document.getElementById('pasteBtn').addEventListener('click', async () => {
+    try {
+        const clipboardItems = await navigator.clipboard.read();
+        for (const item of clipboardItems) {
+            if (item.types.includes('image/png')) {
+                const blob = await item.getType('image/png');
+                currentScreenshotBlob = blob;
+                const previewImage = document.getElementById('previewImage');
+                previewImage.src = URL.createObjectURL(blob);
+                showToast('Image pasted from clipboard!', 'success');
+                return;
+            }
+        }
+        showToast('No image found in clipboard', 'error');
+    } catch (error) {
+        showToast('Failed to paste: ' + error.message, 'error');
+    }
+});
+
+// Global paste listener (Ctrl+V anywhere in modal)
+document.addEventListener('paste', async (e) => {
+    if (!document.getElementById('imagePreviewModal').classList.contains('active')) return;
+    
+    const items = e.clipboardData.items;
+    for (const item of items) {
+        if (item.type.indexOf('image') !== -1) {
+            const blob = item.getAsFile();
+            currentScreenshotBlob = blob;
+            const previewImage = document.getElementById('previewImage');
+            previewImage.src = URL.createObjectURL(blob);
+            showToast('Image pasted!', 'success');
+            e.preventDefault();
+            return;
+        }
+    }
+});
+
+
+
+
+// ====================================
+// SMART DESCRIPTION & FAQ SYSTEM
+// ====================================
+
+// Description generation state
+const descriptionState = {
+    title: '',
+    category: '',
+    categorySlug: '',
+    primaryTag: null, // Only first selected tag
+    tags: [],
+    hasHTML: false,
+    hasCSS: false,
+    hasJS: false,
+    hasTailwind: false
+};
+
+// ====================================
+// CATEGORY-BASED DESCRIPTION TEMPLATES
+// ====================================
+
+const categoryTemplates = {
+    // CARDS CATEGORY
+    'cards': {
+        'profile': [
+            (title, tag) => `This ${title} is a sleek profile card component designed to showcase user information beautifully. ${tag ? `Perfect for ${tag.toLowerCase()} presentations` : 'Ideal for team pages, portfolios, and user directories'}. Features responsive design and smooth hover effects.`,
+            (title, tag) => `Discover this elegant ${title} - a modern profile card that makes user profiles stand out. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Use it on team pages, social platforms, or portfolio sites'}. Clean design with professional styling.`,
+            (title, tag) => `This ${title} brings professional flair to user profiles with its contemporary card design. ${tag ? `Excellent for ${tag.toLowerCase()} layouts` : 'Perfect for membership sites, business directories, and team showcases'}. Fully customizable and responsive.`,
+            (title, tag) => `A stunning ${title} that transforms how you display user information. ${tag ? `Tailored for ${tag.toLowerCase()} interfaces` : 'Works great in dashboards, social networks, and community platforms'}. Modern aesthetics with practical functionality.`,
+            (title, tag) => `Elevate your user interface with this ${title} - a premium profile card component. ${tag ? `Designed specifically for ${tag.toLowerCase()}` : 'Suitable for any platform requiring user profile displays'}. Combines elegance with usability.`
+        ],
+        'product': [
+            (title, tag) => `This ${title} is an eye-catching product card designed to boost conversions and showcase items effectively. ${tag ? `Optimized for ${tag.toLowerCase()} displays` : 'Perfect for e-commerce sites, online stores, and product catalogs'}. Features pricing, images, and call-to-action buttons.`,
+            (title, tag) => `Showcase your products beautifully with this ${title} - a modern e-commerce card component. ${tag ? `Ideal for ${tag.toLowerCase()} sections` : 'Great for online shops, marketplace platforms, and retail websites'}. Responsive and conversion-focused design.`,
+            (title, tag) => `This ${title} transforms product presentations with its sleek, sales-focused design. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Works perfectly in shopping sites, product galleries, and promotional pages'}. Includes hover effects and pricing displays.`,
+            (title, tag) => `A professional ${title} that makes your products shine with modern card styling. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Excellent for WooCommerce, Shopify, or custom e-commerce platforms'}. Mobile-responsive and user-friendly.`,
+            (title, tag) => `Boost your sales with this conversion-optimized ${title} - a premium product card component. ${tag ? `Perfect for ${tag.toLowerCase()}` : 'Suitable for any online retail or marketplace platform'}. Features smooth animations and professional aesthetics.`
+        ],
+        'blog': [
+            (title, tag) => `This ${title} is a content-focused blog card that makes articles and posts more engaging. ${tag ? `Perfect for ${tag.toLowerCase()} displays` : 'Ideal for blogs, news sites, and content platforms'}. Features thumbnail images, excerpts, and read more buttons.`,
+            (title, tag) => `Present your blog content elegantly with this ${title} - a modern article card component. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Works well in magazines, blogs, and news websites'}. Clean typography and intuitive layout.`,
+            (title, tag) => `This ${title} enhances content discovery with its reader-friendly blog card design. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for WordPress sites, Medium-style blogs, and content aggregators'}. Responsive and SEO-friendly.`,
+            (title, tag) => `A beautiful ${title} that showcases blog posts with style and readability. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Excellent for personal blogs, company news, and content marketing sites'}. Includes metadata and category tags.`,
+            (title, tag) => `Engage readers with this ${title} - a premium blog card optimized for content presentation. ${tag ? `Tailored for ${tag.toLowerCase()}` : 'Suitable for any content-driven website or publication'}. Modern design with excellent user experience.`
+        ],
+        'default': [
+            (title, tag) => `This ${title} is a versatile card component that adapts to various content types. ${tag ? `Perfect for ${tag.toLowerCase()}` : 'Ideal for dashboards, landing pages, and content displays'}. Features modern styling and responsive design.`,
+            (title, tag) => `A beautifully crafted ${title} that brings professional aesthetics to your interface. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Works across websites, apps, and admin panels'}. Clean, modern, and fully customizable.`,
+            (title, tag) => `This ${title} combines functionality with elegant design for maximum visual impact. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for any web project requiring card-based layouts'}. Responsive and easy to implement.`,
+            (title, tag) => `Enhance your UI with this ${title} - a flexible card component with contemporary styling. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Suitable for portfolios, business sites, and web applications'}. Professional and polished.`,
+            (title, tag) => `This ${title} delivers premium card design with practical functionality. ${tag ? `Optimized for ${tag.toLowerCase()}` : 'Works great in any modern web project'}. Combines aesthetics with usability perfectly.`
+        ]
+    },
+
+    // FORMS CATEGORY
+    'forms': {
+        'contact': [
+            (title, tag) => `This ${title} is a user-friendly contact form designed to boost inquiries and conversions. ${tag ? `Perfect for ${tag.toLowerCase()} pages` : 'Ideal for business websites, portfolios, and landing pages'}. Features validation, responsive layout, and clean styling.`,
+            (title, tag) => `Connect with your audience using this ${title} - a modern contact form component. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Works excellently on corporate sites, freelancer portfolios, and service pages'}. Includes field validation and smooth animations.`,
+            (title, tag) => `This ${title} makes customer communication easy with its intuitive form design. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for support pages, inquiry forms, and customer service portals'}. Mobile-responsive and conversion-optimized.`,
+            (title, tag) => `A professional ${title} that encourages user engagement and lead generation. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Excellent for marketing sites, agencies, and business platforms'}. Features real-time validation and error handling.`,
+            (title, tag) => `Streamline communication with this ${title} - a premium contact form solution. ${tag ? `Tailored for ${tag.toLowerCase()}` : 'Suitable for any website requiring customer contact functionality'}. Modern design with excellent UX.`
+        ],
+        'checkout': [
+            (title, tag) => `This ${title} is a conversion-focused checkout form designed to reduce cart abandonment. ${tag ? `Perfect for ${tag.toLowerCase()} flows` : 'Ideal for e-commerce sites, online stores, and payment gateways'}. Features multi-step process and secure input fields.`,
+            (title, tag) => `Complete purchases seamlessly with this ${title} - a modern checkout form component. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Works great in WooCommerce, Shopify, and custom e-commerce platforms'}. Includes validation and payment integration support.`,
+            (title, tag) => `This ${title} optimizes the buying process with its streamlined checkout design. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for online shops, subscription services, and digital product sales'}. Mobile-friendly and secure.`,
+            (title, tag) => `A professional ${title} that makes online transactions smooth and trustworthy. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Excellent for SaaS platforms, retail websites, and service bookings'}. Features progress indicators and error prevention.`,
+            (title, tag) => `Maximize conversions with this ${title} - a premium checkout form solution. ${tag ? `Optimized for ${tag.toLowerCase()}` : 'Suitable for any e-commerce or payment processing platform'}. Clean, secure, and user-friendly design.`
+        ],
+        'login': [
+            (title, tag) => `This ${title} is a secure and stylish login form for user authentication. ${tag ? `Perfect for ${tag.toLowerCase()} pages` : 'Ideal for web apps, membership sites, and admin panels'}. Features password visibility toggle and remember me functionality.`,
+            (title, tag) => `Authenticate users elegantly with this ${title} - a modern login form component. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Works excellently in SaaS platforms, dashboards, and private portals'}. Includes validation and error messages.`,
+            (title, tag) => `This ${title} provides secure access control with its professional login design. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for member areas, admin dashboards, and user accounts'}. Responsive and security-focused.`,
+            (title, tag) => `A sleek ${title} that combines security with great user experience. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Excellent for business applications, social platforms, and private communities'}. Features social login options and password recovery.`,
+            (title, tag) => `Secure your platform with this ${title} - a premium login form solution. ${tag ? `Tailored for ${tag.toLowerCase()}` : 'Suitable for any application requiring user authentication'}. Modern aesthetics with robust functionality.`
+        ],
+        'default': [
+            (title, tag) => `This ${title} is a versatile form component designed for data collection and user input. ${tag ? `Perfect for ${tag.toLowerCase()}` : 'Ideal for surveys, registrations, and feedback forms'}. Features validation, responsive design, and clean styling.`,
+            (title, tag) => `Collect information effortlessly with this ${title} - a modern form component. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Works across various websites and applications'}. Includes field validation and user-friendly layout.`,
+            (title, tag) => `This ${title} streamlines data entry with its intuitive form design. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for inquiries, subscriptions, and user registrations'}. Mobile-responsive and accessible.`,
+            (title, tag) => `A professional ${title} that makes form interactions smooth and pleasant. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Excellent for business sites, landing pages, and web applications'}. Features smart validation and error handling.`,
+            (title, tag) => `Enhance user input with this ${title} - a premium form solution. ${tag ? `Optimized for ${tag.toLowerCase()}` : 'Suitable for any project requiring form functionality'}. Clean design with excellent UX.`
+        ]
+    },
+
+    // WIDGETS CATEGORY
+    'widgets': {
+        'clocks': [
+            (title, tag) => `This ${title} is a dynamic clock widget that displays time with style and precision. ${tag ? `Perfect for ${tag.toLowerCase()} dashboards` : 'Ideal for admin panels, productivity apps, and time-tracking tools'}. Features real-time updates and customizable formats.`,
+            (title, tag) => `Keep time beautifully with this ${title} - a modern clock widget component. ${tag ? `Great for ${tag.toLowerCase()} interfaces` : 'Works excellently in dashboards, homepages, and workspace applications'}. Includes timezone support and smooth animations.`,
+            (title, tag) => `This ${title} brings functional elegance to time display with its sleek clock design. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for desktop apps, web dashboards, and scheduling platforms'}. Real-time updates with minimal performance impact.`,
+            (title, tag) => `A stunning ${title} that transforms time display into a visual centerpiece. ${tag ? `Designed for ${tag.toLowerCase()} sections` : 'Excellent for productivity tools, meeting schedulers, and workspace hubs'}. Features multiple time formats and styles.`,
+            (title, tag) => `Enhance your interface with this ${title} - a premium clock widget solution. ${tag ? `Tailored for ${tag.toLowerCase()}` : 'Suitable for any application requiring time display'}. Modern design with practical functionality.`
+        ],
+        'calendars': [
+            (title, tag) => `This ${title} is a feature-rich calendar widget for date selection and event management. ${tag ? `Perfect for ${tag.toLowerCase()} systems` : 'Ideal for booking platforms, scheduling apps, and event management tools'}. Features month/week/day views and event highlighting.`,
+            (title, tag) => `Organize dates effortlessly with this ${title} - a modern calendar widget component. ${tag ? `Great for ${tag.toLowerCase()} interfaces` : 'Works great in appointment schedulers, project management tools, and CRM systems'}. Includes date range selection and holiday marking.`,
+            (title, tag) => `This ${title} simplifies date management with its intuitive calendar design. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for booking sites, task managers, and availability checkers'}. Mobile-responsive with smooth navigation.`,
+            (title, tag) => `A professional ${title} that makes date selection and event tracking seamless. ${tag ? `Designed for ${tag.toLowerCase()} sections` : 'Excellent for reservation systems, planning tools, and schedule managers'}. Features customizable themes and event integration.`,
+            (title, tag) => `Master time organization with this ${title} - a premium calendar widget solution. ${tag ? `Optimized for ${tag.toLowerCase()}` : 'Suitable for any application requiring date management'}. Clean interface with powerful functionality.`
+        ],
+        'charts': [
+            (title, tag) => `This ${title} is a data visualization widget that transforms numbers into compelling charts. ${tag ? `Perfect for ${tag.toLowerCase()} dashboards` : 'Ideal for analytics platforms, admin panels, and reporting tools'}. Features interactive graphs and real-time data updates.`,
+            (title, tag) => `Visualize data beautifully with this ${title} - a modern chart widget component. ${tag ? `Great for ${tag.toLowerCase()} interfaces` : 'Works excellently in business intelligence, KPI dashboards, and data analysis tools'}. Includes multiple chart types and customization options.`,
+            (title, tag) => `This ${title} brings clarity to complex data with its powerful chart visualizations. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for financial dashboards, sales trackers, and performance monitors'}. Responsive and interactive design.`,
+            (title, tag) => `A sophisticated ${title} that makes data insights accessible and engaging. ${tag ? `Designed for ${tag.toLowerCase()} sections` : 'Excellent for SaaS platforms, CRM systems, and analytics applications'}. Features tooltips, legends, and export capabilities.`,
+            (title, tag) => `Unlock data insights with this ${title} - a premium chart widget solution. ${tag ? `Tailored for ${tag.toLowerCase()}` : 'Suitable for any application requiring data visualization'}. Professional graphics with smooth animations.`
+        ],
+        'default': [
+            (title, tag) => `This ${title} is a functional widget component that enhances your interface. ${tag ? `Perfect for ${tag.toLowerCase()}` : 'Ideal for dashboards, sidebars, and control panels'}. Features modern styling and responsive behavior.`,
+            (title, tag) => `Add functionality with this ${title} - a modern widget component. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Works across web applications, admin panels, and portals'}. Clean design with practical features.`,
+            (title, tag) => `This ${title} brings utility and style to your interface with its widget design. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for dashboards, homepages, and application interfaces'}. Responsive and customizable.`,
+            (title, tag) => `A versatile ${title} that adds value to your user interface. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Excellent for various web projects and applications'}. Professional appearance with smooth functionality.`,
+            (title, tag) => `Enhance your platform with this ${title} - a premium widget solution. ${tag ? `Optimized for ${tag.toLowerCase()}` : 'Suitable for any project requiring widget components'}. Modern design with excellent usability.`
+        ]
+    },
+
+    // BUTTONS CATEGORY
+    'buttons': {
+        'default': [
+            (title, tag) => `This ${title} is a stylish button component designed for user interactions and call-to-actions. ${tag ? `Perfect for ${tag.toLowerCase()}` : 'Ideal for landing pages, forms, and navigation menus'}. Features hover effects, multiple states, and accessibility support.`,
+            (title, tag) => `Make actions stand out with this ${title} - a modern button component. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Works excellently across websites, apps, and dashboards'}. Includes various styles and size options.`,
+            (title, tag) => `This ${title} enhances user interactions with its sleek button design. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for CTAs, forms, and navigation elements'}. Responsive with smooth animations.`,
+            (title, tag) => `A professional ${title} that drives engagement and user actions. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Excellent for e-commerce, SaaS, and marketing sites'}. Features loading states and disabled variations.`,
+            (title, tag) => `Boost conversions with this ${title} - a premium button solution. ${tag ? `Tailored for ${tag.toLowerCase()}` : 'Suitable for any project requiring interactive buttons'}. Modern aesthetics with practical functionality.`
+        ]
+    },
+
+    // NAVIGATION CATEGORY
+    'navigation': {
+        'default': [
+            (title, tag) => `This ${title} is an intuitive navigation component for seamless site browsing. ${tag ? `Perfect for ${tag.toLowerCase()}` : 'Ideal for websites, web apps, and mobile interfaces'}. Features responsive design, dropdown menus, and mobile hamburger menu.`,
+            (title, tag) => `Navigate effortlessly with this ${title} - a modern navigation component. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Works great in business sites, portfolios, and applications'}. Includes sticky header and smooth scrolling.`,
+            (title, tag) => `This ${title} improves site usability with its clean navigation design. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for multi-page websites and complex applications'}. Mobile-responsive with touch-friendly interactions.`,
+            (title, tag) => `A professional ${title} that makes site navigation intuitive and elegant. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Excellent for corporate sites, blogs, and e-commerce platforms'}. Features mega menus and search integration.`,
+            (title, tag) => `Enhance user flow with this ${title} - a premium navigation solution. ${tag ? `Optimized for ${tag.toLowerCase()}` : 'Suitable for any website or application'}. Modern design with excellent UX.`
+        ]
+    },
+
+    // ANIMATIONS CATEGORY
+    'animations': {
+        'default': [
+            (title, tag) => `This ${title} is a captivating animation component that brings life to your interface. ${tag ? `Perfect for ${tag.toLowerCase()}` : 'Ideal for hero sections, loading screens, and interactive elements'}. Features smooth transitions and performance-optimized code.`,
+            (title, tag) => `Add motion magic with this ${title} - a modern animation component. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Works beautifully in landing pages, portfolios, and presentations'}. Includes customizable timing and easing functions.`,
+            (title, tag) => `This ${title} captivates users with its fluid animation effects. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for scroll effects, hover states, and page transitions'}. Lightweight and smooth performance.`,
+            (title, tag) => `A stunning ${title} that transforms static designs into dynamic experiences. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Excellent for creative portfolios, marketing sites, and brand showcases'}. Features keyframe animations and CSS transforms.`,
+            (title, tag) => `Bring your UI to life with this ${title} - a premium animation solution. ${tag ? `Tailored for ${tag.toLowerCase()}` : 'Suitable for any project requiring motion design'}. Professional animations with minimal code.`
+        ]
+    },
+
+    // MODALS CATEGORY
+    'modals': {
+        'default': [
+            (title, tag) => `This ${title} is an elegant modal component for focused content display. ${tag ? `Perfect for ${tag.toLowerCase()}` : 'Ideal for confirmations, forms, and content overlays'}. Features backdrop blur, smooth animations, and keyboard accessibility.`,
+            (title, tag) => `Display content elegantly with this ${title} - a modern modal component. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Works excellently for popups, dialogs, and lightboxes'}. Includes close button and click-outside-to-close functionality.`,
+            (title, tag) => `This ${title} captures user attention with its sleek modal design. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for alerts, confirmations, and detailed views'}. Mobile-responsive with smooth transitions.`,
+            (title, tag) => `A professional ${title} that presents information without disrupting flow. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Excellent for e-commerce, forms, and media galleries'}. Features customizable sizes and positions.`,
+            (title, tag) => `Enhance user interactions with this ${title} - a premium modal solution. ${tag ? `Optimized for ${tag.toLowerCase()}` : 'Suitable for any project requiring overlay content'}. Modern design with excellent UX.`
+        ]
+    },
+
+    // LOADERS CATEGORY
+    'loaders': {
+        'default': [
+            (title, tag) => `This ${title} is a visually appealing loader component for better user experience. ${tag ? `Perfect for ${tag.toLowerCase()}` : 'Ideal for page loads, data fetching, and async operations'}. Features smooth animations and customizable colors.`,
+            (title, tag) => `Keep users engaged with this ${title} - a modern loader component. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Works great in web apps, dashboards, and submission forms'}. Includes spinner and progress bar variations.`,
+            (title, tag) => `This ${title} makes waiting times pleasant with its elegant loader design. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for API calls, file uploads, and content loading'}. Lightweight and performance-optimized.`,
+            (title, tag) => `A professional ${title} that maintains user engagement during loading. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Excellent for SaaS platforms, e-commerce sites, and data-heavy applications'}. Features skeleton screens and animated placeholders.`,
+            (title, tag) => `Improve perceived performance with this ${title} - a premium loader solution. ${tag ? `Tailored for ${tag.toLowerCase()}` : 'Suitable for any application with loading states'}. Modern animations with minimal footprint.`
+        ]
+    },
+
+    // DEFAULT FALLBACK
+    'default': {
+        'default': [
+            (title, tag) => `This ${title} is a beautifully crafted UI component for modern web projects. ${tag ? `Perfect for ${tag.toLowerCase()}` : 'Ideal for websites, applications, and dashboards'}. Features responsive design and clean, maintainable code.`,
+            (title, tag) => `Enhance your interface with this ${title} - a modern UI component. ${tag ? `Great for ${tag.toLowerCase()} sections` : 'Works across various web projects'}. Includes customizable styles and smooth interactions.`,
+            (title, tag) => `This ${title} brings professional quality to your web interface. ${tag ? `Built for ${tag.toLowerCase()} layouts` : 'Perfect for business sites, portfolios, and applications'}. Responsive and easy to integrate.`,
+            (title, tag) => `A versatile ${title} designed for exceptional user experiences. ${tag ? `Designed for ${tag.toLowerCase()} interfaces` : 'Excellent for any modern web project'}. Features clean code and modern styling.`,
+            (title, tag) => `Transform your UI with this ${title} - a premium component solution. ${tag ? `Optimized for ${tag.toLowerCase()}` : 'Suitable for websites and applications of all types'}. Professional design with practical functionality.`
+        ]
+    }
+};
+
+// ====================================
+// RANDOM FAQ POOL (excluding permanent ones)
+// ====================================
+
+const randomFAQPool = [
+    {
+        question: (title) => `Can I customize the colors in ${title}?`,
+        answer: (title, hasCSS) => hasCSS 
+            ? `Absolutely! The ${title} uses CSS variables and standard color properties that you can easily modify to match your brand. Simply update the color values in the CSS section.`
+            : `Yes! You can customize the inline styles or add your own CSS to change the colors to match your brand identity.`
+    },
+    {
+        question: (title) => `Is ${title} mobile-responsive?`,
+        answer: (title) => `Yes! The ${title} is built with responsive design principles and works seamlessly across all device sizes - desktop, tablet, and mobile. It uses flexible layouts and media queries for optimal display.`
+    },
+    {
+        question: (title) => `Do I need any external libraries for ${title}?`,
+        answer: (title, hasJS) => hasJS
+            ? `The ${title} uses vanilla JavaScript with no external dependencies. However, Font Awesome icons are included via CDN for iconography. Everything else is self-contained.`
+            : `No! The ${title} is built with pure HTML and CSS. Font Awesome icons are included via CDN, but no JavaScript libraries are required.`
+    },
+    {
+        question: (title) => `Can I use ${title} in commercial projects?`,
+        answer: (title) => `Yes! The ${title} is free to use in both personal and commercial projects. You can modify it as needed and integrate it into your client work or products without restrictions.`
+    },
+    {
+        question: (title) => `How do I integrate ${title} into my existing project?`,
+        answer: (title, hasHTML, hasCSS, hasJS, hasTailwind) => {
+            let parts = [];
+            if (hasTailwind) {
+                parts.push('Make sure you have Tailwind CSS set up in your project');
+                parts.push('copy the Tailwind markup');
+            } else {
+                if (hasHTML) parts.push('copy the HTML');
+                if (hasCSS) parts.push('add the CSS to your stylesheet');
+            }
+            if (hasJS) parts.push('include the JavaScript');
+            return `Simply ${parts.join(', ')} into your project files. The component is designed to work standalone or integrate seamlessly with existing codebases.`;
+        }
+    },
+    {
+        question: (title) => `Does ${title} work with all browsers?`,
+        answer: (title) => `Yes! The ${title} is tested and compatible with all modern browsers including Chrome, Firefox, Safari, Edge, and Opera. It uses standard web technologies for maximum compatibility.`
+    },
+    {
+        question: (title) => `Can I modify the size and dimensions of ${title}?`,
+        answer: (title, hasCSS) => hasCSS
+            ? `Absolutely! You can adjust the width, height, padding, and margin values in the CSS to fit your specific layout needs. The component uses flexible sizing that's easy to customize.`
+            : `Yes! You can add custom CSS or modify inline styles to adjust the dimensions to perfectly fit your layout requirements.`
+    },
+    {
+        question: (title) => `Is ${title} accessible?`,
+        answer: (title) => `The ${title} follows web accessibility best practices including semantic HTML, keyboard navigation support, and proper ARIA attributes where needed. However, always test with your specific use case.`
+    },
+    {
+        question: (title) => `Can I add more features to ${title}?`,
+        answer: (title, hasJS) => hasJS
+            ? `Definitely! The ${title} provides a solid foundation that you can extend with additional JavaScript functionality, event handlers, or integrate with your application logic.`
+            : `Yes! You can enhance the ${title} by adding JavaScript for interactivity, connecting it to backend APIs, or integrating it with frameworks like React or Vue.`
+    },
+    {
+        question: (title) => `Does ${title} affect page load performance?`,
+        answer: (title) => `The ${title} is optimized for performance with minimal code and no heavy dependencies. It loads quickly and has negligible impact on page speed. CSS and JavaScript are kept lean and efficient.`
+    },
+    {
+        question: (title) => `Can I use ${title} with frameworks like React or Vue?`,
+        answer: (title) => `Yes! While the ${title} is written in vanilla HTML/CSS/JS, you can easily adapt it for React (convert to JSX), Vue (use as template), Angular, or any other framework. The logic is framework-agnostic.`
+    },
+    {
+        question: (title) => `How do I change the fonts in ${title}?`,
+        answer: (title, hasCSS) => hasCSS
+            ? `You can modify the font-family property in the CSS section to use any Google Font, system font, or custom font of your choice. Just update the CSS and the fonts will change accordingly.`
+            : `Add a font-family CSS property to override the default fonts with your preferred typeface - whether it's Google Fonts, Adobe Fonts, or custom fonts.`
+    },
+    {
+        question: (title) => `What's the file size of ${title}?`,
+        answer: (title) => `The ${title} is extremely lightweight! The HTML, CSS, and JavaScript combined are just a few kilobytes, ensuring fast load times and minimal impact on your overall page weight.`
+    },
+    {
+        question: (title) => `Can I animate ${title} on scroll?`,
+        answer: (title, hasJS) => hasJS
+            ? `Yes! You can add scroll-triggered animations using Intersection Observer API or libraries like AOS (Animate On Scroll). The ${title} structure is animation-ready.`
+            : `Absolutely! You can integrate scroll animation libraries like AOS, ScrollReveal, or use the Intersection Observer API to add entrance animations to the ${title}.`
+    },
+    {
+        question: (title) => `Is ${title} SEO-friendly?`,
+        answer: (title) => `Yes! The ${title} uses semantic HTML elements and proper structure that search engines can easily crawl and understand. It contributes positively to your page's SEO when used appropriately.`
+    }
+];
+
+// ====================================
+// SMART GENERATION FUNCTIONS
+// ====================================
+
+function getRandomTemplate(categorySlug, primaryTag) {
+    // Normalize category slug
+    const normalizedCategory = categorySlug.toLowerCase().replace(/[-_\s]/g, '');
+    
+    // Check if category exists in templates
+    if (!categoryTemplates[normalizedCategory]) {
+        return categoryTemplates.default.default;
+    }
+    
+    // If primary tag exists, try to find matching subcategory
+    if (primaryTag) {
+        const normalizedTag = primaryTag.toLowerCase().replace(/[-_\s]/g, '');
+        
+        // Check if subcategory exists for this tag
+        const categoryGroup = categoryTemplates[normalizedCategory];
+        
+        for (let subCategory in categoryGroup) {
+            if (normalizedTag.includes(subCategory) || subCategory.includes(normalizedTag)) {
+                return categoryGroup[subCategory];
+            }
+        }
+    }
+    
+    // Return default templates for this category
+    return categoryTemplates[normalizedCategory].default || categoryTemplates.default.default;
+}
+
+function generateSmartDescription() {
+    const { title, category, categorySlug, primaryTag, hasHTML, hasCSS, hasJS, hasTailwind } = descriptionState;
+    
+    if (!title || !category) {
+        return '';
+    }
+    
+    // Get appropriate template array
+    const templates = getRandomTemplate(categorySlug, primaryTag);
+    
+    // Pick random template
+    const randomIndex = Math.floor(Math.random() * templates.length);
+    const templateFn = templates[randomIndex];
+    
+    // Generate description
+    // Generate description
+    let description = templateFn(title, primaryTag);
+    
+    // Add code implementation note
+    const codeParts = [];
+    if (hasTailwind) {
+        codeParts.push('Tailwind CSS');
+    } else {
+        if (hasHTML) codeParts.push('HTML');
+        if (hasCSS) codeParts.push('CSS');
+    }
+    if (hasJS) codeParts.push('JavaScript');
+    
+    if (codeParts.length > 0) {
+        if (codeParts.length === 1) {
+            description += ` Copy the ${codeParts[0]} code to use this component in your web projects.`;
+        } else if (codeParts.length === 2) {
+            description += ` Copy the ${codeParts[0]} and ${codeParts[1]} code to implement this element.`;
+        } else {
+            const last = codeParts.pop();
+            description += ` Copy the ${codeParts.join(', ')}, and ${last} code to integrate this into your website.`;
+        }
+    }
+    
+    description += ' Browse more UI elements and components for your projects.';
+    
+    return description;
+}
+
+// Update description field
+// Track if user manually edited description
+let descriptionManuallyEdited = false;
+
+// Update description field
+function updateDescriptionField() {
+    const descriptionTextarea = document.getElementById('shortDescription');
+    if (!descriptionTextarea) return;
+    
+    // Don't auto-update if user manually edited
+    if (descriptionManuallyEdited) return;
+    
+    const newDescription = generateSmartDescription();
+    if (newDescription) {
+        descriptionTextarea.value = newDescription;
+    }
+}
+
+// Track manual edits
+document.getElementById('shortDescription').addEventListener('input', () => {
+    descriptionManuallyEdited = true;
+});
+
+// Reset flag when regenerate button clicked
+document.getElementById('regenerateDescBtn')?.addEventListener('click', () => {
+    descriptionManuallyEdited = false;
+    updateDescriptionField();
+    showToast('✨ Description Regenerated!', 'success');
+});
+
+// Check code blocks for content
+function detectCodeContent() {
+    const html = htmlEditor.getValue().trim();
+    const css = cssEditor.getValue().trim();
+    const js = jsEditor.getValue().trim();
+    
+    descriptionState.hasHTML = html && html !== '<!-- No HTML needed -->';
+    descriptionState.hasCSS = css && css !== '/* No CSS needed */';
+    descriptionState.hasJS = js && js !== '// No JavaScript needed';
+    
+    // Check if Tailwind is being used
+    descriptionState.hasTailwind = descriptionState.tags.some(tag => 
+        tag.name.toLowerCase().includes('tailwind')
+    );
+    
+    updateDescriptionField();
+}
+
+// ====================================
+// EVENT LISTENERS FOR AUTO-GENERATION
+// ====================================
+
+// Title input
+document.getElementById('elementTitle').addEventListener('input', (e) => {
+    descriptionState.title = e.target.value.trim();
+    updateDescriptionField();
+});
+
+// Update category selection (MODIFY EXISTING FUNCTION)
+function renderCategories() {
+    const grid = document.getElementById('categoryGrid');
+    grid.innerHTML = state.categories.map(cat => `
+        <div class="category-item" data-id="${cat.id}" data-name="${cat.name}" data-slug="${cat.slug}">
+            ${cat.name}
+        </div>
+    `).join('');
+
+    grid.querySelectorAll('.category-item').forEach(item => {
+        item.addEventListener('click', () => {
+            grid.querySelectorAll('.category-item').forEach(i => i.classList.remove('selected'));
+            item.classList.add('selected');
+            state.selectedCategory = parseInt(item.dataset.id);
+            
+            // Update description state
+            descriptionState.category = item.dataset.name;
+            descriptionState.categorySlug = item.dataset.slug;
+            updateDescriptionField();
+        });
+    });
+}
+
+// Update tags selection (MODIFY EXISTING FUNCTION)
+function renderTags() {
+    const container = document.getElementById('tagsScroll');
+    container.innerHTML = state.tags.map(tag => `
+        <div class="tag-item" data-id="${tag.id}" data-name="${tag.name}">
+            ${tag.name}
+        </div>
+    `).join('');
+
+    container.querySelectorAll('.tag-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const tagId = parseInt(item.dataset.id);
+            const tagName = item.textContent.trim();
+
+            if (item.classList.contains('selected')) {
+                item.classList.remove('selected');
+                state.selectedTags = state.selectedTags.filter(t => t.id !== tagId);
+                descriptionState.tags = state.selectedTags;
+                
+                // Update primary tag (first selected)
+                descriptionState.primaryTag = state.selectedTags.length > 0 ? state.selectedTags[0].name : null;
+            } else {
+                item.classList.add('selected');
+                state.selectedTags.push({ id: tagId, name: tagName });
+                descriptionState.tags = state.selectedTags;
+                
+                // Set as primary tag if first selection
+                if (state.selectedTags.length === 1) {
+                    descriptionState.primaryTag = tagName;
+                }
+            }
+            
+            // Check for Tailwind
+            descriptionState.hasTailwind = state.selectedTags.some(tag => 
+                tag.name.toLowerCase().includes('tailwind')
+            );
+
+            updateSelectedTagsDisplay();
+            updateDescriptionField();
+        });
+    });
+}
+
+// Add code editor change detection
+htmlEditor.on('change', () => {
+    updatePreview();
+    detectCodeContent();
+});
+
+cssEditor.on('change', () => {
+    updatePreview();
+    detectCodeContent();
+});
+
+jsEditor.on('change', () => {
+    updatePreview();
+    detectCodeContent();
+});
+
+// ====================================
+// FAQ GENERATION SYSTEM
+// ====================================
+
+let faqCount = 5; // Default 5 FAQs
+
+// Generate smart FAQs
+function generateSmartFAQs(count = 5) {
+    const { title, hasHTML, hasCSS, hasJS, hasTailwind } = descriptionState;
+    
+    if (!title) return [];
+    
+    const faqs = [];
+    
+    // PERMANENT FAQ 1: What is this element?
+    faqs.push({
+        question: `What is ${title}?`,
+        answer: generateSmartDescription().split('.')[0] + '.',
+        permanent: true
+    });
+    
+    // PERMANENT FAQ 2: What tech stacks are used?
+    const techStacks = [];
+    if (hasTailwind) {
+        techStacks.push('Tailwind CSS');
+    } else {
+        if (hasHTML) techStacks.push('HTML5');
+        if (hasCSS) techStacks.push('CSS3');
+    }
+    if (hasJS) techStacks.push('JavaScript (ES6+)');
+    
+    const techStackAnswer = techStacks.length > 0
+        ? `The ${title} is built using ${techStacks.join(', ')}. ${
+            techStacks.includes('JavaScript (ES6+)') 
+                ? 'It uses vanilla JavaScript with no external dependencies.' 
+                : 'No JavaScript frameworks are required.'
+          } ${
+            hasTailwind 
+                ? 'Make sure Tailwind CSS is installed in your project.' 
+                : 'Everything is self-contained and ready to use.'
+          }`
+        : `The ${title} uses standard web technologies that work in all modern browsers.`;
+    
+    faqs.push({
+        question: `What technologies are used in ${title}?`,
+        answer: techStackAnswer,
+        permanent: true
+    });
+    
+    // RANDOM FAQs (count - 2 since we have 2 permanent)
+    const randomCount = Math.max(0, count - 2);
+    const selectedRandomFAQs = getRandomFAQs(randomCount);
+    
+    selectedRandomFAQs.forEach(faqTemplate => {
+        faqs.push({
+            question: faqTemplate.question(title),
+            answer: faqTemplate.answer(title, hasCSS, hasHTML, hasJS, hasTailwind),
+            permanent: false
+        });
+    });
+    
+    return faqs;
+}
+
+// Get random FAQs from pool
+function getRandomFAQs(count) {
+    const shuffled = [...randomFAQPool].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, count);
+}
+
+
+
+
+// Regenerate description button
+document.getElementById('regenerateDescBtn')?.addEventListener('click', () => {
+    updateDescriptionField();
+    showToast('✨ Description Regenerated!', 'success');
+});
+
+// FAQ count selector
+document.getElementById('faqCountSelect')?.addEventListener('change', (e) => {
+    faqCount = parseInt(e.target.value);
+});
+
+// Store existing FAQs to preserve edits
+let existingFAQs = [];
+
+// FAQ generation button
+document.getElementById('generateFaqsBtn')?.addEventListener('click', () => {
+    if (!descriptionState.title) {
+        showToast('❌ Please enter element title first', 'error');
+        return;
+    }
+    
+    // Check if FAQs already exist
+    const faqItems = document.querySelectorAll('.faq-item');
+    const hasExistingFAQs = faqItems.length > 0;
+    
+    let faqs;
+    
+    if (hasExistingFAQs) {
+        // Preserve existing permanent FAQs and regenerate only random ones
+        const existingPermanent = [];
+        faqItems.forEach((item, index) => {
+            const questionInput = document.getElementById(`faq-question-${index}`);
+            const answerInput = document.getElementById(`faq-answer-${index}`);
+            const header = item.querySelector('.faq-header');
+            
+            if (questionInput && answerInput && header.textContent.includes('🔒')) {
+                existingPermanent.push({
+                    question: questionInput.value,
+                    answer: answerInput.value,
+                    permanent: true
+                });
+            }
+        });
+        
+        // Generate only random FAQs
+        const randomCount = Math.max(0, faqCount - existingPermanent.length);
+        const randomFAQs = generateSmartFAQs(faqCount).filter(f => !f.permanent);
+        
+        faqs = [...existingPermanent, ...randomFAQs.slice(0, randomCount)];
+        
+        showToast('🔄 Random FAQs Regenerated!', 'success');
+    } else {
+        // Generate fresh FAQs (first time)
+        faqs = generateSmartFAQs(faqCount);
+        showToast(`✅ Generated ${faqs.length} FAQs`, 'success');
+    }
+
+
+    if (faqs.length === 0) {
+        showToast('❌ Unable to generate FAQs', 'error');
+        return;
+    }
+    
+    const faqsContainer = document.getElementById('faqsContainer');
+faqsContainer.innerHTML = faqs.map((faq, index) => `
+    <div class="faq-item" style="margin-bottom: 15px; border: 3px solid #000; background: #FFF;">
+        <div class="faq-header" style="background: ${faq.permanent ? '#000' : '#FFD700'}; color: ${faq.permanent ? '#FFD700' : '#000'}; padding: 12px 15px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+            <span onclick="toggleFAQ(${index})" style="flex: 1;">${faq.permanent ? '🔒 ' : ''}${faq.question}</span>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                ${!faq.permanent ? `
+                    <button onclick="regenerateSingleFAQ(${index}); event.stopPropagation();" style="background: transparent; border: 2px solid ${faq.permanent ? '#FFD700' : '#000'}; color: ${faq.permanent ? '#FFD700' : '#000'}; padding: 5px 10px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Regenerate this FAQ">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                ` : ''}
+                <i class="fas fa-chevron-down" id="faq-icon-${index}" onclick="toggleFAQ(${index})"></i>
+            </div>
+        </div>
+            <div class="faq-body" id="faq-body-${index}" style="display: none; padding: 15px; background: #FFF8E7;">
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label class="form-label" style="font-size: 11px;">Question ${faq.permanent ? '(Permanent)' : '(Random)'}</label>
+                    <input type="text" class="form-input" id="faq-question-${index}" value="${faq.question}" placeholder="Edit question..." style="font-size: 13px;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" style="font-size: 11px;">Answer</label>
+                    <textarea class="form-input" id="faq-answer-${index}" rows="4" style="font-size: 13px; line-height: 1.5;">${faq.answer}</textarea>
+                </div>
+                ${!faq.permanent ? `
+                    <button type="button" onclick="removeFAQ(${index})" style="background: #FF0000; color: #FFF; border: 2px solid #000; padding: 8px 15px; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer; margin-top: 10px;">
+                        <i class="fas fa-trash"></i> Remove This FAQ
+                    </button>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+    
+    const permanentCount = faqs.filter(f => f.permanent).length;
+    const randomCount = faqs.filter(f => !f.permanent).length;
+    
+    showToast(`✅ Generated ${faqs.length} FAQs (${permanentCount} permanent + ${randomCount} random)`, 'success');
+});
+
+// Toggle FAQ accordion
+window.toggleFAQ = function(index) {
+    const body = document.getElementById(`faq-body-${index}`);
+    const icon = document.getElementById(`faq-icon-${index}`);
+    
+    if (body.style.display === 'none') {
+        body.style.display = 'block';
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+    } else {
+        body.style.display = 'none';
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+    }
+};
+
+// Remove FAQ (only random ones)
+window.removeFAQ = function(index) {
+    const faqItem = document.querySelector(`.faq-item:nth-child(${index + 1})`);
+    if (faqItem) {
+        faqItem.remove();
+        showToast('🗑️ FAQ Removed', 'success');
+    }
+};
+// Regenerate single FAQ
+window.regenerateSingleFAQ = function(index) {
+    const { title, hasHTML, hasCSS, hasJS, hasTailwind } = descriptionState;
+    
+    if (!title) {
+        showToast('❌ Please enter element title first', 'error');
+        return;
+    }
+    
+    // Get a new random FAQ
+    const randomFAQs = getRandomFAQs(1);
+    if (randomFAQs.length === 0) return;
+    
+    const newFAQ = randomFAQs[0];
+    const question = newFAQ.question(title);
+    const answer = newFAQ.answer(title, hasCSS, hasHTML, hasJS, hasTailwind);
+    
+    // Update inputs
+    const questionInput = document.getElementById(`faq-question-${index}`);
+    const answerInput = document.getElementById(`faq-answer-${index}`);
+    
+    if (questionInput && answerInput) {
+        questionInput.value = question;
+        answerInput.value = answer;
+        
+        // Update header text
+        const faqItems = document.querySelectorAll('.faq-item');
+        const header = faqItems[index]?.querySelector('.faq-header span');
+        if (header) {
+            header.textContent = question;
+        }
+        
+        showToast('🔄 FAQ Regenerated!', 'success');
+    }
+};
+// Get FAQs data for submission (returns JSON string for textarea)
+function getFAQsData() {
+    const faqItems = document.querySelectorAll('.faq-item');
+    const faqs = [];
+    
+    faqItems.forEach((item, index) => {
+        const questionInput = document.getElementById(`faq-question-${index}`);
+        const answerInput = document.getElementById(`faq-answer-${index}`);
+        
+        if (questionInput && answerInput) {
+            const question = questionInput.value.trim();
+            const answer = answerInput.value.trim();
+            
+            if (question && answer) {
+                faqs.push({ 
+                    question: question, 
+                    answer: answer 
+                });
+            }
+        }
+    });
+    
+    // Return as JSON string for textarea storage
+    return JSON.stringify(faqs);
+}
+
+
+
+
+
+
+
+
+
+
+
+document.getElementById('confirmSubmit').addEventListener('click', async () => {
+    const title = document.getElementById('elementTitle').value.trim();
+    let html = htmlEditor.getValue().trim();
+    let css = cssEditor.getValue().trim();
+    let js = jsEditor.getValue().trim();
+    
+    // Get short description and FAQs
+    const shortDescription = document.getElementById('shortDescription').value.trim();
+    const faqsJson = getFAQsData(); // Returns JSON string
+
+    if (!html) html = '<!-- No HTML needed -->';
+    if (!css) css = '/* No CSS needed */';
+    if (!js) js = '// No JavaScript needed';
+
+    if (!currentScreenshotBlob) {
+        showToast('No screenshot available', 'error');
+        return;
+    }
+
+    // Close modal
+    document.getElementById('imagePreviewModal').classList.remove('active');
+
+    let mediaId = null;
+    let postId = null;
+
+    try {
+        // Upload Image
+        showLoading('Uploading featured image...');
+        try {
+            const formData = new FormData();
+            const timestamp = Date.now();
+            const randomStr = Math.random().toString(36).substring(2, 9);
+            const filename = `${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${timestamp}-${randomStr}-ToolsFever.com.png`;
+            
+            formData.append('file', currentScreenshotBlob, filename);
+            formData.append('title', `${title} - ToolsFever.com Preview`);
+            formData.append('alt_text', title);
+            formData.append('caption', `Preview of ${title}`);
+
+            const mediaResponse = await fetch(`${state.wpUrl}/wp-json/wp/v2/media`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Basic ' + btoa(`${state.wpUsername}:${state.wpPassword}`)
+                },
+                body: formData
+            });
+
+            if (mediaResponse.ok) {
+                const mediaData = await mediaResponse.json();
+                mediaId = mediaData.id;
+                console.log('✓ Image uploaded. Media ID:', mediaId);
+                showToast('Screenshot uploaded!', 'success');
+            }
+        } catch (imageError) {
+            console.error('Image upload error:', imageError);
+            showToast('⚠ Image upload failed, continuing...', 'error');
+        }
+
+        // Check for slug conflicts
+        showLoading('Checking for conflicts...');
+        const cleanSlug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+
+        try {
+            const slugCheckResponse = await fetch(
+                `${state.wpUrl}/wp-json/wp/v2/ui-elements?slug=${cleanSlug}&status=any&per_page=100`,
+                {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(`${state.wpUsername}:${state.wpPassword}`)
+                    }
+                }
+            );
+            
+            if (slugCheckResponse.ok) {
+                const conflictingPosts = await slugCheckResponse.json();
+                for (const post of conflictingPosts) {
+                    await fetch(`${state.wpUrl}/wp-json/wp/v2/ui-elements/${post.id}?force=true`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': 'Basic ' + btoa(`${state.wpUsername}:${state.wpPassword}`)
+                        }
+                    });
+                    console.log(`✓ Deleted conflicting post ID: ${post.id}`);
+                }
+            }
+        } catch (e) {
+            console.log('Slug check skipped:', e.message);
+        }
+
+// Create WordPress Post
+showLoading('Creating WordPress post...');
+
+// ✅ Generate smart meta description for Rank Math
+const categoryName = state.categories.find(c => c.id === state.selectedCategory)?.name || 'UI Element';
+const templates = [
+    `Discover the {name} – a stunning {category} UI element. Copy the {code} to use this component in your web projects.`,
+    `Explore the {name} {category} component. Get the {code} and integrate this element into your website or application.`,
+    `Get the {name} – a modern {category} element. Download the {code} to add this component to your projects.`,
+    `Copy the {name} {category} for your project. Grab the {code} to implement this beautiful UI component easily.`,
+    `Find the perfect {name} – a responsive {category} element. Copy the {code} and use this component in your designs.`,
+    `Download the {name} {category} component. Get the {code} to enhance your website with this stunning element.`,
+    `Grab the {name} – a professional {category} UI element. Copy the {code} to add this component to your web projects.`,
+    `Use the {name} {category} in your designs. Download the {code} to integrate this responsive element into your projects.`,
+    `Add the {name} to your website – a sleek {category} component. Copy the {code} for this premium UI element.`,
+    `Implement the {name} {category} easily. Get the {code} and use this elegant element in your websites and applications.`
+];
+
+// Pick random template
+const randomTemplate = templates[Math.floor(Math.random() * templates.length)];
+
+// Build code string intelligently
+const codeParts = [];
+if (descriptionState.hasTailwind) {
+    codeParts.push('Tailwind CSS');
+} else {
+    if (descriptionState.hasHTML) codeParts.push('HTML');
+    if (descriptionState.hasCSS) codeParts.push('CSS');
+}
+if (descriptionState.hasJS) codeParts.push('JavaScript');
+
+let codeString = 'code';
+if (codeParts.length === 1) {
+    codeString = codeParts[0] + ' code';
+} else if (codeParts.length === 2) {
+    codeString = codeParts[0] + ' and ' + codeParts[1] + ' code';
+} else if (codeParts.length > 2) {
+    const last = codeParts.pop();
+    codeString = codeParts.join(', ') + ', and ' + last + ' code';
+}
+
+// Generate meta description
+const metaDescription = randomTemplate
+    .replace('{name}', title)
+    .replace('{category}', categoryName.toLowerCase())
+    .replace('{code}', codeString);
+
+const postData = {
+    title: title,
+    slug: cleanSlug,
+    status: 'publish',
+    'element-category': [state.selectedCategory],
+    'element-tag': state.selectedTags.map(t => t.id),
+    meta: {
+        rank_math_focus_keyword: title,
+        rank_math_description: metaDescription
+    }
+};
+if (mediaId) postData.featured_media = mediaId;
+
+        const response = await fetch(`${state.wpUrl}/wp-json/wp/v2/ui-elements`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Basic ' + btoa(`${state.wpUsername}:${state.wpPassword}`)
+            },
+            body: JSON.stringify(postData)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to create post');
+        }
+
+        const result = await response.json();
+        postId = result.id;
+        console.log('✓ Post created with ID:', postId);
+
+        // Save ACF Fields
+        showLoading('Saving ACF fields...');
+        let acfUpdated = false;
+
+        // Try ACF v3 endpoint first
+        try {
+            const acfV3Response = await fetch(`${state.wpUrl}/wp-json/acf/v3/ui-elements/${postId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Basic ' + btoa(`${state.wpUsername}:${state.wpPassword}`)
+                },
+                body: JSON.stringify({
+                    fields: { 
+                        html_code: html, 
+                        css_code: css, 
+                        js_code: js,
+                        short_description: shortDescription,
+                        faqs: faqsJson  // ✅ Correct variable name
+                    }
+                })
+            });
+            
+            if (acfV3Response.ok) {
+                console.log('✓ ACF fields saved via v3 endpoint');
+                acfUpdated = true;
+            } else {
+                const errorData = await acfV3Response.json();
+                console.log('ACF v3 failed:', errorData);
+            }
+        } catch (e) {
+            console.log('ACF v3 endpoint error:', e.message);
+        }
+
+        // Fallback: Try WP REST API with ACF
+        if (!acfUpdated) {
+            try {
+                const wpUpdateResponse = await fetch(`${state.wpUrl}/wp-json/wp/v2/ui-elements/${postId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Basic ' + btoa(`${state.wpUsername}:${state.wpPassword}`)
+                    },
+                    body: JSON.stringify({
+                        acf: { 
+                            html_code: html, 
+                            css_code: css, 
+                            js_code: js,
+                            short_description: shortDescription,
+                            faqs: faqsJson  // ✅ Correct variable name
+                        }
+                    })
+                });
+                
+                if (wpUpdateResponse.ok) {
+                    console.log('✓ ACF fields saved via WP REST API');
+                    acfUpdated = true;
+                } else {
+                    const errorData = await wpUpdateResponse.json();
+                    console.log('WP REST API failed:', errorData);
+                }
+            } catch (e) {
+                console.log('WP REST API error:', e.message);
+            }
+        }
+
+        // Fallback: Try meta fields
+        if (!acfUpdated) {
+            try {
+                const metaFields = {
+                    html_code: html,
+                    css_code: css,
+                    js_code: js,
+                    short_description: shortDescription,
+                    faqs: faqsJson
+                };
+
+                for (const [key, val] of Object.entries(metaFields)) {
+                    await fetch(`${state.wpUrl}/wp-json/wp/v2/ui-elements/${postId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Basic ' + btoa(`${state.wpUsername}:${state.wpPassword}`)
+                        },
+                        body: JSON.stringify({ meta: { [key]: val } })
+                    });
+                }
+                console.log('✓ Fields saved via meta endpoint');
+                acfUpdated = true;
+            } catch (e) {
+                console.log('Meta update error:', e.message);
+            }
+        }
+
+        // Success message
+        let msg = '✅ Element Created Successfully!';
+        if (mediaId) msg += ' (with image)';
+        if (!acfUpdated) msg += ' ⚠ Check ACF fields manually';
+        
+        showToast(msg, 'success');
+        console.log('Post URL:', `${state.wpUrl}/?p=${postId}`);
+
+        // Reset form
+        document.getElementById('elementTitle').value = '';
+        document.getElementById('shortDescription').value = '';
+        document.getElementById('faqsContainer').innerHTML = '<p style="color: #999; font-size: 14px; padding: 20px; background: #FFF; border: 2px dashed #000; text-align: center;">💡 Click "Generate FAQs" to create questions.</p>';
+        htmlEditor.setValue('');
+        cssEditor.setValue('');
+        jsEditor.setValue('');
+        state.selectedCategory = null;
+        state.selectedTags = [];
+        descriptionState.title = '';
+        descriptionState.category = '';
+        descriptionState.categorySlug = '';
+        descriptionState.primaryTag = null;
+        descriptionState.tags = [];
+        document.querySelectorAll('.category-item').forEach(i => i.classList.remove('selected'));
+        document.querySelectorAll('.tag-item').forEach(i => i.classList.remove('selected'));
+        updateSelectedTagsDisplay();
+        updatePreview();
+        currentScreenshotBlob = null;
+
+    } catch (error) {
+        showToast('❌ Failed: ' + error.message, 'error');
+        console.error('Submission error:', error);
+    } finally {
+        hideLoading();
+    }
+});
+        // Load Analytics
+        async function loadAnalytics() {
+            if (!state.isConnected) {
+                showToast('Please check your connection', 'error');
+                return;
+            }
+
+            showLoading('Loading analytics...');
+
+            try {
+                // Get all elements
+                const elementsRes = await fetch(`${state.wpUrl}/wp-json/wp/v2/ui-elements?per_page=100`, {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa(`${state.wpUsername}:${state.wpPassword}`)
+                    }
+                });
+
+                const elements = await elementsRes.json();
+                const totalElements = elements.length;
+
+                // Count by category
+                const categoryCount = {};
+                state.categories.forEach(cat => {
+                    categoryCount[cat.id] = {
+                        name: cat.name,
+                        count: 0
+                    };
+                });
+
+                elements.forEach(element => {
+                    if (element['element-category'] && element['element-category'].length > 0) {
+                        element['element-category'].forEach(catId => {
+                            if (categoryCount[catId]) {
+                                categoryCount[catId].count++;
+                            }
+                        });
+                    }
+                });
+
+                // Count by tag
+                const tagCount = {};
+                state.tags.forEach(tag => {
+                    tagCount[tag.id] = {
+                        name: tag.name,
+                        count: 0
+                    };
+                });
+
+                elements.forEach(element => {
+                    if (element['element-tag'] && element['element-tag'].length > 0) {
+                        element['element-tag'].forEach(tagId => {
+                            if (tagCount[tagId]) {
+                                tagCount[tagId].count++;
+                            }
+                        });
+                    }
+                });
+
+                // Update UI
+                document.getElementById('totalElements').textContent = totalElements;
+
+                const analyticsGrid = document.getElementById('analyticsGrid');
+                
+                // Category cards
+                const categoryCards = Object.values(categoryCount)
+                    .filter(cat => cat.count > 0)
+                    .sort((a, b) => b.count - a.count)
+                    .map(cat => `
+                        <div class="analytics-card">
+                            <div class="analytics-header">${cat.name}</div>
+                            <div class="analytics-count">${cat.count}</div>
+                            <div class="analytics-footer">Elements in Category</div>
+                        </div>
+                    `).join('');
+
+                // Tag cards
+                const tagCards = Object.values(tagCount)
+                    .filter(tag => tag.count > 0)
+                    .sort((a, b) => b.count - a.count)
+                    .map(tag => `
+                        <div class="analytics-card">
+                            <div class="analytics-header" style="background: #FFD700; color: #000;">${tag.name}</div>
+                            <div class="analytics-count">${tag.count}</div>
+                            <div class="analytics-footer">Elements with Tag</div>
+                        </div>
+                    `).join('');
+
+                analyticsGrid.innerHTML = categoryCards + tagCards;
+
+                if (totalElements === 0) {
+                    analyticsGrid.innerHTML = `
+                        <div class="analytics-card" style="grid-column: 1 / -1;">
+                            <div class="analytics-header">No Data Yet</div>
+                            <div class="analytics-count" style="font-size: 48px; padding: 40px;">
+                                Start adding elements to see analytics
+                            </div>
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                showToast('Failed to load analytics: ' + error.message, 'error');
+                console.error('Analytics error:', error);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Initialize preview
+        updatePreview();
+
+        // Auto-connect on page load
+        window.addEventListener('load', () => {
+            autoConnect();
+        });
+
+        // Load sample code for testing
+        function loadSampleCode() {
+            document.getElementById('elementTitle').value = 'Glassmorphic Card';
+            htmlEditor.setValue(`<div class="glass-card">
+  <h2>Glassmorphic Card</h2>
+  <p>A beautiful card with glass effect</p>
+  <button class="glass-btn">Learn More</button>
+</div>`);
+            cssEditor.setValue(`.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 40px;
+  max-width: 400px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.glass-card h2 {
+  margin: 0 0 15px 0;
+  color: #000;
+  font-size: 28px;
+}
+
+.glass-card p {
+  margin: 0 0 25px 0;
+  color: #333;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.glass-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 25px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.glass-btn:hover {
+  transform: translateY(-2px);
+}`);
+            jsEditor.setValue(`// Add hover animation
+const card = document.querySelector('.glass-card');
+card.addEventListener('mouseenter', () => {
+  card.style.transform = 'translateY(-5px)';
+  card.style.transition = 'transform 0.3s ease';
+});
+
+card.addEventListener('mouseleave', () => {
+  card.style.transform = 'translateY(0)';
+});`);
+            updatePreview();
+            showToast('Sample code loaded!', 'success');
+        }
+
+        // Add keyboard shortcut for sample code (Ctrl+Shift+S)
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+                e.preventDefault();
+                loadSampleCode();
+            }
+        });
+    </script>
+</body>
+</html>
