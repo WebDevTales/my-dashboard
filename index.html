@@ -810,9 +810,12 @@
                             </div>
                         </div>
 
-                        <div class="form-section">
-                            <div class="form-section-title">Select Tags</div>
-                            <div class="tags-scroll-container" id="tagsScroll">
+<div class="form-section">
+    <div class="form-section-title">Select Tags</div>
+    <div class="form-group" style="margin-bottom: 15px;">
+        <input type="text" class="form-input" id="tagSearchInput" placeholder="🔍 Search tags..." style="font-size: 14px;">
+    </div>
+    <div class="tags-scroll-container" id="tagsScroll">
                                 <!-- Tags will be loaded here -->
                             </div>
                             <div class="selected-tags-display" id="selectedTagsDisplay">
@@ -1272,6 +1275,41 @@ setTimeout(() => {
                 });
             });
         }
+
+
+
+        // Tag Search Functionality
+document.getElementById('tagSearchInput')?.addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase().trim();
+    const tagItems = document.querySelectorAll('.tag-item');
+    
+    tagItems.forEach(item => {
+        const tagName = item.dataset.name.toLowerCase();
+        
+        if (tagName.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    // Show message if no results
+    const visibleTags = Array.from(tagItems).filter(item => item.style.display !== 'none');
+    
+    if (visibleTags.length === 0 && searchTerm) {
+        const container = document.getElementById('tagsScroll');
+        if (!document.getElementById('noTagsMessage')) {
+            const message = document.createElement('div');
+            message.id = 'noTagsMessage';
+            message.style.cssText = 'padding: 20px; text-align: center; color: #999; font-size: 14px; width: 100%;';
+            message.textContent = `No tags found for "${searchTerm}"`;
+            container.appendChild(message);
+        }
+    } else {
+        const message = document.getElementById('noTagsMessage');
+        if (message) message.remove();
+    }
+});
 
         function updateSelectedTagsDisplay() {
             const display = document.getElementById('selectedTagsDisplay');
