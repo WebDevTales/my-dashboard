@@ -2844,14 +2844,29 @@ editor.addEventListener('paste', (e) => {
     let pastedHTML = clipboardData.getData('text/html');
     let pastedText = clipboardData.getData('text/plain');
     
-    if (pastedHTML) {
-        // Clean and insert HTML
+    // Always prioritize text/plain for markdown detection
+    if (pastedText) {
+        // Check if text contains markdown syntax
+        const hasMarkdown = /^#{1,3}\s|^\*\*|^-\s|^\d+\.\s|`[^`]+`|\*\*[^*]+\*\*/m.test(pastedText);
+        
+        if (hasMarkdown) {
+            // Convert markdown to HTML
+            const html = convertMarkdownToHTML(pastedText);
+            document.execCommand('insertHTML', false, html);
+            showToast('✨ Markdown converted!', 'success');
+        } else if (pastedHTML) {
+            // Use HTML if available and no markdown detected
+            pastedHTML = cleanPastedHTML(pastedHTML);
+            document.execCommand('insertHTML', false, pastedHTML);
+        } else {
+            // Plain text
+            const html = convertTextToHTML(pastedText);
+            document.execCommand('insertHTML', false, html);
+        }
+    } else if (pastedHTML) {
+        // Only HTML available
         pastedHTML = cleanPastedHTML(pastedHTML);
         document.execCommand('insertHTML', false, pastedHTML);
-    } else if (pastedText) {
-        // Check if it's markdown
-        const html = convertMarkdownToHTML(pastedText);
-        document.execCommand('insertHTML', false, html);
     }
     
     // Mark as manually edited
@@ -2889,36 +2904,102 @@ function convertMarkdownToHTML(text) {
     
     let html = text;
     
-    // Headers (must be done before paragraph processing)
-    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
-    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
-    html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+    // Escape HTML entities first
+    html = html.replace(/&/g, '&amp;')
+               .replace(/</g, '&lt;')
+               .replace(/>/g, '&gt;');
     
-    // Bold
-    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
-    
-    // Italic
-    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
-    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
-    
-    // Inline code
-    html = html.replace(/`(.+?)`/g, '<code>$1</code>');
-    
-    // Code blocks (must be before list processing)
+    // Code blocks (must be FIRST before other processing)
     html = html.replace(/```[\s\S]*?```/g, (match) => {
         const code = match.replace(/```\w*\n?|\n?```/g, '').trim();
         return `<pre><code>${code}</code></pre>`;
     });
     
+    // Headers (must be done before paragraph processing)
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+    
+    // Bold (process before italic to avoid conflicts)
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    
+    // Italic (after bold)
+    html = html.replace(/\*([^*]+?)\*/g, '<em>$1</em>');
+    html = html.replace(/_([^_]+?)_/g, '<em>$1</em>');
+    
+    // Inline code
+    html = html.replace(/`([^`]+?)`/g, '<code>$1</code>');
+    
     // Unordered lists
-    html = html.replace(/^\- (.+)$/gm, '<li>$1</li>');
-    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+    const lines = html.split('\n');
+    const processed = [];
+    let inList = false;
+    let listItems = [];
+    
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        
+        // Check if line is a list item
+        if (/^[-*]\s+(.+)/.test(line)) {
+            const content = line.replace(/^[-*]\s+/, '');
+            listItems.push(`<li>${content}</li>`);
+            inList = true;
+        } else {
+            // Not a list item
+            if (inList && listItems.length > 0) {
+                processed.push(`<ul>${listItems.join('')}</ul>`);
+                listItems = [];
+                inList = false;
+            }
+            if (line.trim()) {
+                processed.push(line);
+            }
+        }
+    }
+    
+    // Close any remaining list
+    if (inList && listItems.length > 0) {
+        processed.push(`<ul>${listItems.join('')}</ul>`);
+    }
+    
+    html = processed.join('\n');
     
     // Ordered lists
-    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+    const orderedLines = html.split('\n');
+    const orderedProcessed = [];
+    let inOrderedList = false;
+    let orderedItems = [];
     
-    // Paragraphs (split by double newlines)
+    for (let i = 0; i < orderedLines.length; i++) {
+        const line = orderedLines[i];
+        
+        // Check if line is an ordered list item
+        if (/^\d+\.\s+(.+)/.test(line)) {
+            const content = line.replace(/^\d+\.\s+/, '');
+            orderedItems.push(`<li>${content}</li>`);
+            inOrderedList = true;
+        } else {
+            // Not an ordered list item
+            if (inOrderedList && orderedItems.length > 0) {
+                orderedProcessed.push(`<ol>${orderedItems.join('')}</ol>`);
+                orderedItems = [];
+                inOrderedList = false;
+            }
+            if (line.trim()) {
+                orderedProcessed.push(line);
+            }
+        }
+    }
+    
+    // Close any remaining ordered list
+    if (inOrderedList && orderedItems.length > 0) {
+        orderedProcessed.push(`<ol>${orderedItems.join('')}</ol>`);
+    }
+    
+    html = orderedProcessed.join('\n');
+    
+    // Paragraphs (wrap remaining text)
     const blocks = html.split('\n\n');
     html = blocks.map(block => {
         block = block.trim();
@@ -2929,9 +3010,22 @@ function convertMarkdownToHTML(text) {
             return block;
         }
         
+        // Don't wrap single-line headers
+        if (block.match(/^<h[1-6]>/i)) {
+            return block;
+        }
+        
         // Wrap in paragraph
+        const lines = block.split('\n').filter(l => l.trim());
+        if (lines.length === 1 && !lines[0].match(/^<(h[1-6]|ul|ol|pre)/i)) {
+            return `<p>${lines[0]}</p>`;
+        }
+        
         return `<p>${block.replace(/\n/g, '<br>')}</p>`;
-    }).join('');
+    }).join('\n');
+    
+    // Unescape HTML entities in tags (but not in content)
+    html = html.replace(/&lt;(\/?)(h[1-6]|p|strong|em|code|ul|ol|li|pre|br)&gt;/g, '<$1$2>');
     
     return html;
 }
