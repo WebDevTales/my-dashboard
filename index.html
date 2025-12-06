@@ -1587,7 +1587,20 @@
                 });
             });
         }
-
+// Tag Search Functionality
+document.getElementById('tagSearchInput')?.addEventListener('input', (e) => {
+    const searchTerm = e.target.value.toLowerCase().trim();
+    const tagItems = document.querySelectorAll('.tag-item');
+    
+    tagItems.forEach(item => {
+        const tagName = item.textContent.toLowerCase();
+        if (tagName.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
         // View elements in a category
         // View elements in a category
         window.viewCategoryElements = async function (categoryId, categoryName) {
