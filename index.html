@@ -2752,34 +2752,45 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
         // ====================================
 
         // Format text in rich editor
-        window.formatText = function (command, value = null) {
-            document.execCommand(command, false, value);
-            document.getElementById('shortDescription').focus();
-        };
+window.formatText = function (command, value = null) {
+    const editor = document.getElementById('shortDescription');
+    editor.focus();
+    
+    if (command === 'formatBlock') {
+        // Special handling for heading/paragraph formatting
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+            document.execCommand('formatBlock', false, value);
+        }
+    } else {
+        document.execCommand(command, false, value);
+    }
+};
 
         // Clear all formatting
-        window.clearFormatting = function () {
-            const editor = document.getElementById('shortDescription');
-            const selection = window.getSelection();
-
-            if (selection.rangeCount > 0) {
-                const range = selection.getRangeAt(0);
-                const selectedText = range.toString();
-
-                if (selectedText) {
-                    document.execCommand('removeFormat', false, null);
-                    document.execCommand('formatBlock', false, 'p');
-                } else {
-                    // Clear all if nothing selected
-                    if (confirm('Clear all formatting from the entire description?')) {
-                        const plainText = editor.innerText;
-                        editor.innerHTML = `<p>${plainText}</p>`;
-                    }
-                }
-            }
-
+window.clearFormatting = function () {
+    const editor = document.getElementById('shortDescription');
+    const selection = window.getSelection();
+    
+    if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const selectedText = range.toString();
+        
+        if (selectedText) {
+            // Clear formatting for selection only
+            document.execCommand('removeFormat', false, null);
+            document.execCommand('formatBlock', false, 'p');
+        } else {
+            // Clear all formatting
+            const plainText = editor.innerText;
+            editor.innerHTML = '';
             editor.focus();
-        };
+            showToast('✨ Formatting cleared - Ready for new content', 'info');
+        }
+    }
+    
+    editor.focus();
+};
 
         // Get HTML content from rich editor
         function getDescriptionHTML() {
@@ -2812,27 +2823,27 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
             const editor = document.getElementById('shortDescription');
 
             if (editor) {
-                editor.addEventListener('paste', (e) => {
-                    e.preventDefault();
-
-                    // Get pasted content
-                    const clipboardData = e.clipboardData || window.clipboardData;
-                    let pastedHTML = clipboardData.getData('text/html');
-                    let pastedText = clipboardData.getData('text/plain');
-
-                    if (pastedHTML) {
-                        // Clean and insert HTML
-                        pastedHTML = cleanPastedHTML(pastedHTML);
-                        document.execCommand('insertHTML', false, pastedHTML);
-                    } else if (pastedText) {
-                        // Convert plain text to HTML
-                        const html = convertTextToHTML(pastedText);
-                        document.execCommand('insertHTML', false, html);
-                    }
-
-                    // Mark as manually edited
-                    descriptionManuallyEdited = true;
-                });
+editor.addEventListener('paste', (e) => {
+    e.preventDefault();
+    
+    // Get pasted content
+    const clipboardData = e.clipboardData || window.clipboardData;
+    let pastedHTML = clipboardData.getData('text/html');
+    let pastedText = clipboardData.getData('text/plain');
+    
+    if (pastedHTML) {
+        // Clean and insert HTML
+        pastedHTML = cleanPastedHTML(pastedHTML);
+        document.execCommand('insertHTML', false, pastedHTML);
+    } else if (pastedText) {
+        // Check if it's markdown
+        const html = convertMarkdownToHTML(pastedText);
+        document.execCommand('insertHTML', false, html);
+    }
+    
+    // Mark as manually edited
+    descriptionManuallyEdited = true;
+});
             }
         });
 
@@ -2859,7 +2870,58 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
 
             return temp.innerHTML;
         }
-
+// NEW FUNCTION: Convert Markdown to HTML
+function convertMarkdownToHTML(text) {
+    if (!text) return '';
+    
+    let html = text;
+    
+    // Headers (must be done before paragraph processing)
+    html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+    html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+    html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+    
+    // Bold
+    html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+    
+    // Italic
+    html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+    html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+    
+    // Inline code
+    html = html.replace(/`(.+?)`/g, '<code>$1</code>');
+    
+    // Code blocks (must be before list processing)
+    html = html.replace(/```[\s\S]*?```/g, (match) => {
+        const code = match.replace(/```\w*\n?|\n?```/g, '').trim();
+        return `<pre><code>${code}</code></pre>`;
+    });
+    
+    // Unordered lists
+    html = html.replace(/^\- (.+)$/gm, '<li>$1</li>');
+    html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+    
+    // Ordered lists
+    html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+    
+    // Paragraphs (split by double newlines)
+    const blocks = html.split('\n\n');
+    html = blocks.map(block => {
+        block = block.trim();
+        if (!block) return '';
+        
+        // Don't wrap if already wrapped in HTML tags
+        if (block.match(/^<(h[1-6]|ul|ol|pre|div|blockquote)/i)) {
+            return block;
+        }
+        
+        // Wrap in paragraph
+        return `<p>${block.replace(/\n/g, '<br>')}</p>`;
+    }).join('');
+    
+    return html;
+}
         // TEXT TO HTML CONVERTER (keep existing function but update it)
         function convertTextToHTML(text) {
             if (!text) return '';
@@ -3190,8 +3252,11 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
                 console.log('Post URL:', `${state.wpUrl}/?p=${postId}`);
 
                 // Reset form
-                document.getElementById('elementTitle').value = '';
-                document.getElementById('shortDescription').value = '';
+// Reset form
+document.getElementById('elementTitle').value = '';
+const descEditor = document.getElementById('shortDescription');
+descEditor.innerHTML = '';
+descriptionManuallyEdited = false;
                 document.getElementById('faqsContainer').innerHTML = '<p style="color: #999; font-size: 14px; padding: 20px; background: #FFF; border: 2px dashed #000; text-align: center;">💡 Click "Generate FAQs" to create questions.</p>';
                 htmlEditor.setValue('');
                 cssEditor.setValue('');
