@@ -2729,31 +2729,40 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
                 showToast('🔄 FAQ Regenerated!', 'success');
             }
         };
-        // Get FAQs data for submission (returns JSON string for textarea)
-        function getFAQsData() {
-            const faqItems = document.querySelectorAll('.faq-item');
-            const faqs = [];
+// Get FAQs data for submission (returns JSON string for textarea)
+function getFAQsData() {
+    const faqItems = document.querySelectorAll('.faq-item');
+    const faqs = [];
 
-            faqItems.forEach((item, index) => {
-                const questionInput = document.getElementById(`faq-question-${index}`);
-                const answerInput = document.getElementById(`faq-answer-${index}`);
+    faqItems.forEach((item, index) => {
+        const questionInput = document.getElementById(`faq-question-${index}`);
+        const answerInput = document.getElementById(`faq-answer-${index}`);
 
-                if (questionInput && answerInput) {
-                    const question = questionInput.value.trim();
-                    const answer = answerInput.value.trim();
+        if (questionInput && answerInput) {
+            // Clean and escape the text
+            let question = questionInput.value.trim();
+            let answer = answerInput.value.trim();
 
-                    if (question && answer) {
-                        faqs.push({
-                            question: question,
-                            answer: answer
-                        });
-                    }
-                }
-            });
+            // Remove excessive newlines and normalize whitespace
+            question = question.replace(/\n+/g, ' ').replace(/\s+/g, ' ');
+            answer = answer.replace(/\n+/g, ' ').replace(/\s+/g, ' ');
 
-            // Return as JSON string for textarea storage
-            return JSON.stringify(faqs);
+            // Remove any control characters
+            question = question.replace(/[\x00-\x1F\x7F]/g, '');
+            answer = answer.replace(/[\x00-\x1F\x7F]/g, '');
+
+            if (question && answer) {
+                faqs.push({
+                    question: question,
+                    answer: answer
+                });
+            }
         }
+    });
+
+    // Return as properly escaped JSON string
+    return JSON.stringify(faqs);
+}
 
 
 
