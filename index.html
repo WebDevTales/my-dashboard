@@ -1075,25 +1075,30 @@
                         </div>
 
                         <div class="form-section">
-                            <div class="form-section-title">
-                                FAQs (Auto-Generated)
-                                <div style="float: right; display: flex; gap: 10px; align-items: center;">
-                                    <select id="faqCountSelect"
-                                        style="padding: 5px 10px; border: 2px solid #000; background: #FFF; font-family: 'Courier New', monospace; font-weight: bold;">
-                                        <option value="3">3 FAQs</option>
-                                        <option value="4">4 FAQs</option>
-                                        <option value="5" selected>5 FAQs</option>
-                                        <option value="6">6 FAQs</option>
-                                        <option value="7">7 FAQs</option>
-                                        <option value="8">8 FAQs</option>
-                                    </select>
-                                    <button type="button" class="icon-btn" id="generateFaqsBtn"
-                                        style="background: #FFD700; color: #000; border: 2px solid #000; padding: 5px 10px; cursor: pointer;"
-                                        title="Generate FAQs">
-                                        <i class="fas fa-magic"></i> Generate
-                                    </button>
-                                </div>
-                            </div>
+<div class="form-section-title">
+    FAQs (Auto-Generated)
+    <div style="float: right; display: flex; gap: 10px; align-items: center;">
+        <select id="faqCountSelect"
+            style="padding: 5px 10px; border: 2px solid #000; background: #FFF; font-family: 'Courier New', monospace; font-weight: bold;">
+            <option value="3">3 FAQs</option>
+            <option value="4">4 FAQs</option>
+            <option value="5" selected>5 FAQs</option>
+            <option value="6">6 FAQs</option>
+            <option value="7">7 FAQs</option>
+            <option value="8">8 FAQs</option>
+        </select>
+        <button type="button" class="icon-btn" id="validateJsonBtn"
+            style="background: #00FF00; color: #000; border: 2px solid #000; padding: 5px 10px; cursor: pointer; font-weight: bold;"
+            title="Preview & Validate JSON">
+            <i class="fas fa-code"></i> Preview JSON
+        </button>
+        <button type="button" class="icon-btn" id="generateFaqsBtn"
+            style="background: #FFD700; color: #000; border: 2px solid #000; padding: 5px 10px; cursor: pointer;"
+            title="Generate FAQs">
+            <i class="fas fa-magic"></i> Generate
+        </button>
+    </div>
+</div>
                             <div id="faqsContainer" style="margin-top: 15px;">
                                 <p
                                     style="color: #999; font-size: 14px; padding: 20px; background: #FFF; border: 2px dashed #000; text-align: center;">
@@ -1249,6 +1254,70 @@
             </div>
         </div>
     </div>
+
+
+    <!-- JSON Preview Modal -->
+<div class="image-preview-modal" id="jsonPreviewModal" style="z-index: 10001;">
+    <div class="image-preview-content" style="max-width: 900px;">
+        <div class="image-preview-header">
+            <i class="fas fa-code"></i> FAQ JSON Preview & Validator
+            <button class="modal-close" id="jsonModalClose">✕</button>
+        </div>
+        <div class="image-preview-body" style="max-height: 70vh; overflow: auto;">
+            
+            <!-- JSON Status -->
+            <div id="jsonStatus" style="padding: 15px; margin-bottom: 20px; border: 3px solid #000; background: #FFF; font-weight: bold; display: flex; align-items: center; gap: 10px;">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Checking JSON...</span>
+            </div>
+
+            <!-- JSON Editor -->
+            <div style="background: #FFF; border: 3px solid #000; padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <label class="form-label" style="margin: 0;">JSON Output (Editable)</label>
+                    <button type="button" onclick="copyJsonToClipboard()" style="background: #FFD700; color: #000; border: 2px solid #000; padding: 8px 15px; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer;">
+                        <i class="fas fa-copy"></i> Copy JSON
+                    </button>
+                </div>
+                <textarea id="jsonPreviewText" style="width: 100%; min-height: 400px; padding: 15px; border: 3px solid #000; background: #1e1e1e; color: #00FF00; font-family: 'Courier New', monospace; font-size: 13px; line-height: 1.6; resize: vertical;"></textarea>
+            </div>
+
+            <!-- Auto-Fix Tools -->
+            <div style="background: #FFF8E7; border: 3px solid #000; padding: 20px; margin-top: 20px;">
+                <div class="form-label" style="margin-bottom: 15px;">🔧 JSON Auto-Fix Tools</div>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                    <button type="button" onclick="fixJsonQuotes()" style="background: #FFD700; color: #000; border: 2px solid #000; padding: 10px; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer;">
+                        <i class="fas fa-quote-right"></i> Fix Quotes
+                    </button>
+                    <button type="button" onclick="fixJsonNewlines()" style="background: #FFD700; color: #000; border: 2px solid #000; padding: 10px; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer;">
+                        <i class="fas fa-align-left"></i> Fix Newlines
+                    </button>
+                    <button type="button" onclick="fixJsonWhitespace()" style="background: #FFD700; color: #000; border: 2px solid #000; padding: 10px; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer;">
+                        <i class="fas fa-compress"></i> Trim Whitespace
+                    </button>
+                    <button type="button" onclick="beautifyJson()" style="background: #00FF00; color: #000; border: 2px solid #000; padding: 10px; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer;">
+                        <i class="fas fa-magic"></i> Beautify
+                    </button>
+                    <button type="button" onclick="minifyJson()" style="background: #FFF; color: #000; border: 2px solid #000; padding: 10px; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer;">
+                        <i class="fas fa-compress-alt"></i> Minify
+                    </button>
+                    <button type="button" onclick="fixAllJsonIssues()" style="background: #FF6B6B; color: #FFF; border: 2px solid #000; padding: 10px; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer;">
+                        <i class="fas fa-wrench"></i> Fix All Issues
+                    </button>
+                </div>
+            </div>
+
+        </div>
+        <div class="image-preview-footer">
+            <button class="modal-btn cancel-btn" onclick="closeJsonModal()">
+                <i class="fas fa-times"></i> Close
+            </button>
+            <button class="modal-btn confirm-btn" onclick="applyFixedJson()">
+                <i class="fas fa-check"></i> Apply Fixed JSON
+            </button>
+        </div>
+    </div>
+</div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
@@ -3597,6 +3666,242 @@ card.addEventListener('mouseleave', () => {
                 loadSampleCode();
             }
         });
+
+
+
+
+
+
+
+
+
+
+// ====================================
+// JSON PREVIEW & VALIDATION SYSTEM
+// ====================================
+
+// Show JSON Preview Modal
+document.getElementById('validateJsonBtn')?.addEventListener('click', () => {
+    const jsonString = getFAQsData();
+    document.getElementById('jsonPreviewText').value = jsonString;
+    document.getElementById('jsonPreviewModal').classList.add('active');
+    validateJsonStatus(jsonString);
+});
+
+// Close JSON Modal
+document.getElementById('jsonModalClose')?.addEventListener('click', () => {
+    document.getElementById('jsonPreviewModal').classList.remove('active');
+});
+
+window.closeJsonModal = function() {
+    document.getElementById('jsonPreviewModal').classList.remove('active');
+};
+
+// Validate JSON and show status
+function validateJsonStatus(jsonString) {
+    const statusDiv = document.getElementById('jsonStatus');
+    
+    try {
+        JSON.parse(jsonString);
+        statusDiv.innerHTML = `
+            <i class="fas fa-check-circle" style="color: #00FF00; font-size: 20px;"></i>
+            <span style="color: #00FF00;">✅ Valid JSON - Ready to Submit</span>
+        `;
+        statusDiv.style.background = '#d4edda';
+        statusDiv.style.borderColor = '#00FF00';
+    } catch (error) {
+        statusDiv.innerHTML = `
+            <i class="fas fa-exclamation-triangle" style="color: #FF0000; font-size: 20px;"></i>
+            <span style="color: #FF0000;">❌ Invalid JSON: ${error.message}</span>
+        `;
+        statusDiv.style.background = '#f8d7da';
+        statusDiv.style.borderColor = '#FF0000';
+    }
+}
+
+// Auto-validate on edit
+document.getElementById('jsonPreviewText')?.addEventListener('input', (e) => {
+    validateJsonStatus(e.target.value);
+});
+
+// Fix unescaped quotes
+window.fixJsonQuotes = function() {
+    let jsonText = document.getElementById('jsonPreviewText').value;
+    
+    try {
+        // Parse and re-stringify to auto-escape
+        const parsed = JSON.parse(jsonText);
+        jsonText = JSON.stringify(parsed, null, 2);
+        document.getElementById('jsonPreviewText').value = jsonText;
+        validateJsonStatus(jsonText);
+        showToast('✅ Quotes Fixed!', 'success');
+    } catch (error) {
+        // Manual fix for common quote issues
+        jsonText = jsonText.replace(/([^\\])"/g, '$1\\"');
+        document.getElementById('jsonPreviewText').value = jsonText;
+        showToast('⚠ Attempted fix - please verify', 'info');
+    }
+};
+
+// Fix newlines
+window.fixJsonNewlines = function() {
+    let jsonText = document.getElementById('jsonPreviewText').value;
+    
+    try {
+        const parsed = JSON.parse(jsonText);
+        // Remove excessive newlines from content
+        parsed.forEach(faq => {
+            faq.question = faq.question.replace(/\n+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+            faq.answer = faq.answer.replace(/\n+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+        });
+        jsonText = JSON.stringify(parsed, null, 2);
+        document.getElementById('jsonPreviewText').value = jsonText;
+        validateJsonStatus(jsonText);
+        showToast('✅ Newlines Fixed!', 'success');
+    } catch (error) {
+        showToast('❌ Cannot fix - Invalid JSON', 'error');
+    }
+};
+
+// Fix whitespace
+window.fixJsonWhitespace = function() {
+    let jsonText = document.getElementById('jsonPreviewText').value;
+    
+    try {
+        const parsed = JSON.parse(jsonText);
+        // Trim all whitespace
+        parsed.forEach(faq => {
+            faq.question = faq.question.trim().replace(/\s{2,}/g, ' ');
+            faq.answer = faq.answer.trim().replace(/\s{2,}/g, ' ');
+        });
+        jsonText = JSON.stringify(parsed, null, 2);
+        document.getElementById('jsonPreviewText').value = jsonText;
+        validateJsonStatus(jsonText);
+        showToast('✅ Whitespace Cleaned!', 'success');
+    } catch (error) {
+        showToast('❌ Cannot fix - Invalid JSON', 'error');
+    }
+};
+
+// Beautify JSON
+window.beautifyJson = function() {
+    let jsonText = document.getElementById('jsonPreviewText').value;
+    
+    try {
+        const parsed = JSON.parse(jsonText);
+        jsonText = JSON.stringify(parsed, null, 2);
+        document.getElementById('jsonPreviewText').value = jsonText;
+        validateJsonStatus(jsonText);
+        showToast('✨ JSON Beautified!', 'success');
+    } catch (error) {
+        showToast('❌ Cannot beautify - Invalid JSON', 'error');
+    }
+};
+
+// Minify JSON
+window.minifyJson = function() {
+    let jsonText = document.getElementById('jsonPreviewText').value;
+    
+    try {
+        const parsed = JSON.parse(jsonText);
+        jsonText = JSON.stringify(parsed);
+        document.getElementById('jsonPreviewText').value = jsonText;
+        validateJsonStatus(jsonText);
+        showToast('🗜️ JSON Minified!', 'success');
+    } catch (error) {
+        showToast('❌ Cannot minify - Invalid JSON', 'error');
+    }
+};
+
+// Fix ALL common issues
+window.fixAllJsonIssues = function() {
+    let jsonText = document.getElementById('jsonPreviewText').value;
+    
+    try {
+        const parsed = JSON.parse(jsonText);
+        
+        // Clean all FAQ items
+        parsed.forEach(faq => {
+            // Remove newlines
+            faq.question = faq.question.replace(/\n+/g, ' ').trim();
+            faq.answer = faq.answer.replace(/\n+/g, ' ').trim();
+            
+            // Remove excessive whitespace
+            faq.question = faq.question.replace(/\s{2,}/g, ' ');
+            faq.answer = faq.answer.replace(/\s{2,}/g, ' ');
+            
+            // Remove control characters
+            faq.question = faq.question.replace(/[\x00-\x1F\x7F]/g, '');
+            faq.answer = faq.answer.replace(/[\x00-\x1F\x7F]/g, '');
+        });
+        
+        jsonText = JSON.stringify(parsed, null, 2);
+        document.getElementById('jsonPreviewText').value = jsonText;
+        validateJsonStatus(jsonText);
+        showToast('✅ All Issues Fixed!', 'success');
+    } catch (error) {
+        showToast('❌ Cannot auto-fix - Manual correction needed', 'error');
+    }
+};
+
+// Copy JSON to clipboard
+window.copyJsonToClipboard = function() {
+    const jsonText = document.getElementById('jsonPreviewText').value;
+    navigator.clipboard.writeText(jsonText).then(() => {
+        showToast('📋 JSON Copied to Clipboard!', 'success');
+    }).catch(() => {
+        showToast('❌ Failed to copy', 'error');
+    });
+};
+
+// Apply fixed JSON back to FAQs
+window.applyFixedJson = function() {
+    const jsonText = document.getElementById('jsonPreviewText').value;
+    
+    try {
+        const parsed = JSON.parse(jsonText);
+        
+        if (!Array.isArray(parsed) || parsed.length === 0) {
+            showToast('❌ Invalid FAQ structure', 'error');
+            return;
+        }
+        
+        // Rebuild FAQ items in the form
+        const faqsContainer = document.getElementById('faqsContainer');
+        faqsContainer.innerHTML = parsed.map((faq, index) => `
+            <div class="faq-item" style="margin-bottom: 15px; border: 3px solid #000; background: #FFF;">
+                <div class="faq-header" style="background: #FFD700; color: #000; padding: 12px 15px; font-weight: bold; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
+                    <span onclick="toggleFAQ(${index})" style="flex: 1;">${faq.question}</span>
+                    <i class="fas fa-chevron-down" id="faq-icon-${index}" onclick="toggleFAQ(${index})"></i>
+                </div>
+                <div class="faq-body" id="faq-body-${index}" style="display: none; padding: 15px; background: #FFF8E7;">
+                    <div class="form-group" style="margin-bottom: 10px;">
+                        <label class="form-label" style="font-size: 11px;">Question</label>
+                        <input type="text" class="form-input" id="faq-question-${index}" value="${faq.question.replace(/"/g, '&quot;')}" placeholder="Edit question..." style="font-size: 13px;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" style="font-size: 11px;">Answer</label>
+                        <textarea class="form-input" id="faq-answer-${index}" rows="4" style="font-size: 13px; line-height: 1.5;">${faq.answer}</textarea>
+                    </div>
+                    <button type="button" onclick="removeFAQ(${index})" style="background: #FF0000; color: #FFF; border: 2px solid #000; padding: 8px 15px; font-family: 'Courier New', monospace; font-weight: bold; cursor: pointer; margin-top: 10px;">
+                        <i class="fas fa-trash"></i> Remove This FAQ
+                    </button>
+                </div>
+            </div>
+        `).join('');
+        
+        closeJsonModal();
+        showToast('✅ Fixed JSON Applied!', 'success');
+        
+    } catch (error) {
+        showToast('❌ Cannot apply - JSON is invalid', 'error');
+    }
+};
+
+
+
+
+        
     </script>
 </body>
 
